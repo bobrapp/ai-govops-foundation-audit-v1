@@ -203,6 +203,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "assessor_engagements_firm_id_fkey"
+            columns: ["firm_id"]
+            isOneToOne: false
+            referencedRelation: "qagac_firms_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "assessor_engagements_review_id_fkey"
             columns: ["review_id"]
             isOneToOne: false
@@ -276,6 +283,13 @@ export type Database = {
             columns: ["qaga_firm_id"]
             isOneToOne: false
             referencedRelation: "qagac_firms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attestations_qaga_firm_id_fkey"
+            columns: ["qaga_firm_id"]
+            isOneToOne: false
+            referencedRelation: "qagac_firms_public"
             referencedColumns: ["id"]
           },
           {
@@ -421,6 +435,13 @@ export type Database = {
             referencedRelation: "qagac_firms"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "firm_dev_engagements_firm_id_fkey"
+            columns: ["firm_id"]
+            isOneToOne: false
+            referencedRelation: "qagac_firms_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
@@ -508,6 +529,13 @@ export type Database = {
             columns: ["firm_id"]
             isOneToOne: false
             referencedRelation: "qagac_firms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qaga_assessors_firm_id_fkey"
+            columns: ["firm_id"]
+            isOneToOne: false
+            referencedRelation: "qagac_firms_public"
             referencedColumns: ["id"]
           },
         ]
@@ -740,7 +768,42 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      qagac_firms_public: {
+        Row: {
+          active_assessor_count: number | null
+          charter_at: string | null
+          created_at: string | null
+          id: string | null
+          jurisdiction: string | null
+          name: string | null
+          public_listed: boolean | null
+          status: string | null
+          website: string | null
+        }
+        Insert: {
+          active_assessor_count?: number | null
+          charter_at?: string | null
+          created_at?: string | null
+          id?: string | null
+          jurisdiction?: string | null
+          name?: string | null
+          public_listed?: boolean | null
+          status?: string | null
+          website?: string | null
+        }
+        Update: {
+          active_assessor_count?: number | null
+          charter_at?: string | null
+          created_at?: string | null
+          id?: string | null
+          jurisdiction?: string | null
+          name?: string | null
+          public_listed?: boolean | null
+          status?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       aos_active_version: { Args: never; Returns: string }
