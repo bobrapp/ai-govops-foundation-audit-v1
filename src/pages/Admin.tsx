@@ -5,7 +5,7 @@ import { useRoles, AppRole } from "@/hooks/useRoles";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ShieldCheck, UserCog, Crown, Loader2, KeyRound, Sparkles, Trash2 } from "lucide-react";
+import { ShieldCheck, UserCog, Crown, Loader2, KeyRound, Sparkles, Trash2, FileSignature } from "lucide-react";
 
 interface Member {
   id: string;
@@ -23,6 +23,16 @@ const Admin = () => {
   const [claiming, setClaiming] = useState(false);
   const [seeding, setSeeding] = useState(false);
   const [unseeding, setUnseeding] = useState(false);
+  const [backfilling, setBackfilling] = useState(false);
+
+  const backfillPdfs = async () => {
+    setBackfilling(true);
+    const { data, error } = await supabase.functions.invoke("backfill-attestation-pdfs", { body: {} });
+    if (error) { toast.error(error.message); setBackfilling(false); return; }
+    if (data?.error) { toast.error(data.error); setBackfilling(false); return; }
+    toast.success(`Generated ${data?.generated ?? 0} signed PDF${data?.generated === 1 ? "" : "s"}`);
+    setBackfilling(false);
+  };
 
   const seedDemo = async () => {
     if (!confirm("Seed demo dataset? Creates 1 firm, 2 demo QAGAs, 3 reviews. Safe to re-run.")) return;
@@ -152,7 +162,11 @@ const Admin = () => {
               {seeding ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
               Seed demo dataset
             </Button>
-            <Button variant="outline" size="sm" onClick={unseedDemo} disabled={seeding || unseeding} className="text-destructive hover:text-destructive">
+            <Button variant="outline" size="sm" onClick={backfillPdfs} disabled={backfilling || seeding || unseeding}>
+              {backfilling ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileSignature className="h-4 w-4 mr-2" />}
+              Generate signed PDFs
+            </Button>
+            <Button variant="outline" size="sm" onClick={unseedDemo} disabled={seeding || unseeding || backfilling} className="text-destructive hover:text-destructive">
               {unseeding ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
               Unseed
             </Button>
