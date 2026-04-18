@@ -1,17 +1,23 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Shield } from "lucide-react";
+import { Shield, Mail, Sparkles } from "lucide-react";
 
 const Auth = () => {
   const { signIn, signUp, user } = useAuth();
   const nav = useNavigate();
   const [busy, setBusy] = useState(false);
+  const [magicBusy, setMagicBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
+  const [demoBusy, setDemoBusy] = useState(false);
 
   useEffect(() => { if (user) nav("/dashboard"); }, [user, nav]);
 
@@ -38,6 +44,44 @@ const Auth = () => {
     if (error) toast.error(error); else { toast.success("account created"); nav("/dashboard"); }
   };
 
+  const onMagicLink = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const email = String(fd.get("magic_email"));
+    if (!email) return;
+    setMagicBusy(true);
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+    });
+    setMagicBusy(false);
+    if (error) toast.error(error.message);
+    else toast.success("Magic link sent — check your email");
+  };
+
+  const onGoogle = async () => {
+    setGoogleBusy(true);
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
+    if (result.error) {
+      toast.error(result.error instanceof Error ? result.error.message : "Google sign-in failed");
+      setGoogleBusy(false);
+      return;
+    }
+    if (result.redirected) return;
+    nav("/dashboard");
+  };
+
+  const onDemo = async () => {
+    setDemoBusy(true);
+    const { error } = await supabase.auth.signInAnonymously();
+    setDemoBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Demo session started — your data is throwaway");
+    nav("/dashboard");
+  };
+
   return (
     <div className="min-h-screen bg-hero grid place-items-center p-4">
       <div className="w-full max-w-md rounded-xl border border-border bg-card-grad p-6 shadow-elev">
@@ -50,11 +94,40 @@ const Auth = () => {
             <div className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">sign in to review</div>
           </div>
         </div>
-        <Tabs defaultValue="signin">
-          <TabsList className="grid grid-cols-2 w-full">
-            <TabsTrigger value="signin">Sign in</TabsTrigger>
-            <TabsTrigger value="signup">Create account</TabsTrigger>
+
+        {/* Quick / credential-less options */}
+        <div className="space-y-2 mb-4">
+          <Button type="button" variant="outline" className="w-full" onClick={onGoogle} disabled={googleBusy}>
+            {googleBusy ? "…" : "Continue with Google"}
+          </Button>
+          <Button type="button" variant="secondary" className="w-full" onClick={onDemo} disabled={demoBusy}>
+            <Sparkles className="h-4 w-4 mr-2" />
+            {demoBusy ? "…" : "Try as demo user (no signup)"}
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-3 my-4">
+          <Separator className="flex-1" />
+          <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">or</span>
+          <Separator className="flex-1" />
+        </div>
+
+        <Tabs defaultValue="magic">
+          <TabsList className="grid grid-cols-3 w-full">
+            <TabsTrigger value="magic">Magic link</TabsTrigger>
+            <TabsTrigger value="signin">Password</TabsTrigger>
+            <TabsTrigger value="signup">Sign up</TabsTrigger>
           </TabsList>
+          <TabsContent value="magic">
+            <form onSubmit={onMagicLink} className="space-y-3 mt-4">
+              <div><Label>Email</Label><Input name="magic_email" type="email" required autoComplete="email" /></div>
+              <Button type="submit" className="w-full" disabled={magicBusy}>
+                <Mail className="h-4 w-4 mr-2" />
+                {magicBusy ? "Sending…" : "Email me a sign-in link"}
+              </Button>
+              <p className="text-[11px] text-muted-foreground">No password — we'll email you a one-click link.</p>
+            </form>
+          </TabsContent>
           <TabsContent value="signin">
             <form onSubmit={onSignIn} className="space-y-3 mt-4">
               <div><Label>Email</Label><Input name="email" type="email" required autoComplete="email" /></div>
