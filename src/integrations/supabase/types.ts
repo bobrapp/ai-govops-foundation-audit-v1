@@ -17,6 +17,8 @@ export type Database = {
       agent_findings: {
         Row: {
           agent_name: string
+          aos_control_id: string | null
+          aos_version: string | null
           category: string | null
           created_at: string
           evidence: string | null
@@ -31,6 +33,8 @@ export type Database = {
         }
         Insert: {
           agent_name: string
+          aos_control_id?: string | null
+          aos_version?: string | null
           category?: string | null
           created_at?: string
           evidence?: string | null
@@ -45,6 +49,8 @@ export type Database = {
         }
         Update: {
           agent_name?: string
+          aos_control_id?: string | null
+          aos_version?: string | null
           category?: string | null
           created_at?: string
           evidence?: string | null
@@ -60,6 +66,144 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "agent_findings_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aos_controls: {
+        Row: {
+          control_id: string
+          created_at: string
+          domain: string
+          evidence_expected: string
+          framework_refs: string[]
+          id: string
+          level: number
+          objective: string
+          testing_procedure: string
+          version_id: string
+        }
+        Insert: {
+          control_id: string
+          created_at?: string
+          domain: string
+          evidence_expected: string
+          framework_refs?: string[]
+          id?: string
+          level?: number
+          objective: string
+          testing_procedure: string
+          version_id: string
+        }
+        Update: {
+          control_id?: string
+          created_at?: string
+          domain?: string
+          evidence_expected?: string
+          framework_refs?: string[]
+          id?: string
+          level?: number
+          objective?: string
+          testing_procedure?: string
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aos_controls_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "aos_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aos_versions: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          status: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          version: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      assessor_engagements: {
+        Row: {
+          assessor_id: string
+          client_org: string
+          conflict_reason: string | null
+          created_at: string
+          firm_id: string
+          id: string
+          independence_attestation: string | null
+          independence_declared_at: string | null
+          independence_signed_by: string | null
+          review_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assessor_id: string
+          client_org: string
+          conflict_reason?: string | null
+          created_at?: string
+          firm_id: string
+          id?: string
+          independence_attestation?: string | null
+          independence_declared_at?: string | null
+          independence_signed_by?: string | null
+          review_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assessor_id?: string
+          client_org?: string
+          conflict_reason?: string | null
+          created_at?: string
+          firm_id?: string
+          id?: string
+          independence_attestation?: string | null
+          independence_declared_at?: string | null
+          independence_signed_by?: string | null
+          review_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessor_engagements_assessor_id_fkey"
+            columns: ["assessor_id"]
+            isOneToOne: false
+            referencedRelation: "qaga_assessors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessor_engagements_firm_id_fkey"
+            columns: ["firm_id"]
+            isOneToOne: false
+            referencedRelation: "qagac_firms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessor_engagements_review_id_fkey"
             columns: ["review_id"]
             isOneToOne: false
             referencedRelation: "reviews"
@@ -114,6 +258,44 @@ export type Database = {
           },
         ]
       }
+      firm_dev_engagements: {
+        Row: {
+          active_through: string | null
+          client_org: string
+          created_at: string
+          engagement_kind: string
+          firm_id: string
+          id: string
+          notes: string | null
+        }
+        Insert: {
+          active_through?: string | null
+          client_org: string
+          created_at?: string
+          engagement_kind: string
+          firm_id: string
+          id?: string
+          notes?: string | null
+        }
+        Update: {
+          active_through?: string | null
+          client_org?: string
+          created_at?: string
+          engagement_kind?: string
+          firm_id?: string
+          id?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "firm_dev_engagements_firm_id_fkey"
+            columns: ["firm_id"]
+            isOneToOne: false
+            referencedRelation: "qagac_firms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -135,6 +317,119 @@ export type Database = {
           id?: string
           organization?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      qaga_assessors: {
+        Row: {
+          badges: string[]
+          created_at: string
+          display_name: string
+          exam_passed_at: string | null
+          firm_id: string | null
+          id: string
+          jurisdiction: string | null
+          public_listed: boolean
+          qaga_credential_id: string | null
+          qaga_expires_at: string | null
+          qaga_issued_at: string | null
+          status: string
+          training_completed_at: string | null
+          training_level: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          badges?: string[]
+          created_at?: string
+          display_name: string
+          exam_passed_at?: string | null
+          firm_id?: string | null
+          id?: string
+          jurisdiction?: string | null
+          public_listed?: boolean
+          qaga_credential_id?: string | null
+          qaga_expires_at?: string | null
+          qaga_issued_at?: string | null
+          status?: string
+          training_completed_at?: string | null
+          training_level?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          badges?: string[]
+          created_at?: string
+          display_name?: string
+          exam_passed_at?: string | null
+          firm_id?: string | null
+          id?: string
+          jurisdiction?: string | null
+          public_listed?: boolean
+          qaga_credential_id?: string | null
+          qaga_expires_at?: string | null
+          qaga_issued_at?: string | null
+          status?: string
+          training_completed_at?: string | null
+          training_level?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qaga_assessors_firm_id_fkey"
+            columns: ["firm_id"]
+            isOneToOne: false
+            referencedRelation: "qagac_firms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qagac_firms: {
+        Row: {
+          active_assessor_count: number
+          charter_at: string | null
+          contact_email: string | null
+          created_at: string
+          id: string
+          indemnity_amount_usd: number | null
+          indemnity_carrier: string | null
+          jurisdiction: string | null
+          name: string
+          public_listed: boolean
+          status: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          active_assessor_count?: number
+          charter_at?: string | null
+          contact_email?: string | null
+          created_at?: string
+          id?: string
+          indemnity_amount_usd?: number | null
+          indemnity_carrier?: string | null
+          jurisdiction?: string | null
+          name: string
+          public_listed?: boolean
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          active_assessor_count?: number
+          charter_at?: string | null
+          contact_email?: string | null
+          created_at?: string
+          id?: string
+          indemnity_amount_usd?: number | null
+          indemnity_carrier?: string | null
+          jurisdiction?: string | null
+          name?: string
+          public_listed?: boolean
+          status?: string
+          updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }
@@ -250,6 +545,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      aos_active_version: { Args: never; Returns: string }
       assign_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -265,11 +561,19 @@ export type Database = {
         }
         Returns: boolean
       }
+      request_engagement: {
+        Args: { _assessor_id: string; _review_id: string }
+        Returns: string
+      }
       revoke_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _target_user: string
         }
+        Returns: undefined
+      }
+      sign_independence_declaration: {
+        Args: { _attestation: string; _engagement_id: string }
         Returns: undefined
       }
     }
