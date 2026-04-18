@@ -10,9 +10,88 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Loader2, GitBranch, FileCode, UploadCloud } from "lucide-react";
+import { Loader2, GitBranch, FileCode, UploadCloud, Sparkles } from "lucide-react";
 
 type Scenario = "enterprise_oss" | "healthcare_codegen" | "generative_ip" | "hr_behavior" | "general";
+
+const SAMPLE_HEALTHCARE_POLICY = `package aigovops.healthcare.triage_bot
+
+# Acme Health — Patient Triage Chatbot Policy v2.1
+# Scope: LLM-powered symptom triage assistant, US deployment (HIPAA).
+# Owner: Clinical Informatics · Reviewed quarterly.
+
+default allow = false
+
+# ---------------------------------------------------------------
+# Allowed actions
+# ---------------------------------------------------------------
+allow {
+  input.actor.role == "patient"
+  input.action == "submit_symptoms"
+  input.session.consent_acknowledged == true
+  not input.payload.contains_phi_freetext
+}
+
+allow {
+  input.actor.role == "clinician"
+  input.action in {"view_transcript", "override_triage", "escalate"}
+  input.actor.npi_verified == true
+}
+
+# ---------------------------------------------------------------
+# Hard denials — emergency routing
+# ---------------------------------------------------------------
+deny[msg] {
+  input.payload.red_flag_symptoms[_] == "chest_pain"
+  msg := "Emergency symptom detected — must route to 911 hand-off, never auto-triage."
+}
+
+deny[msg] {
+  input.payload.red_flag_symptoms[_] == "suicidal_ideation"
+  msg := "Crisis pathway required — route to 988 Lifeline, log to clinician queue."
+}
+
+# ---------------------------------------------------------------
+# PHI handling
+# ---------------------------------------------------------------
+phi_minimization {
+  input.payload.fields_collected == {"age_band", "symptom_codes", "duration_days"}
+}
+
+deny[msg] {
+  not phi_minimization
+  msg := "PHI minimization violated — only age_band, symptom_codes, duration_days permitted."
+}
+
+# Model output must never echo back identifiers
+deny[msg] {
+  input.model_output.contains_identifiers == true
+  msg := "Model leaked identifiers in response — block and log incident."
+}
+
+# ---------------------------------------------------------------
+# Audit & retention
+# ---------------------------------------------------------------
+audit_required {
+  input.action in {"submit_symptoms", "override_triage", "escalate"}
+}
+
+retention_days := 2555  # 7 years per HIPAA §164.316(b)(2)
+
+# ---------------------------------------------------------------
+# Model governance
+# ---------------------------------------------------------------
+deny[msg] {
+  input.model.version != input.approved_model.version
+  msg := sprintf("Unapproved model version %v — only %v is cleared for clinical use.",
+    [input.model.version, input.approved_model.version])
+}
+
+deny[msg] {
+  input.model.last_bias_eval_days_ago > 90
+  msg := "Bias evaluation stale (>90 days) — re-run EEOC/health-equity test suite."
+}
+`;
 
 const SCENARIOS: { id: Scenario; label: string; desc: string }[] = [
   { id: "enterprise_oss", label: "Enterprise OSS adoption", desc: "OpenCLAW, vector DBs, foundation models inside a regulated org." },
@@ -28,6 +107,24 @@ const Submit = () => {
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<"paste" | "upload" | "github">("paste");
   const [scenarios, setScenarios] = useState<Scenario[]>(["general"]);
+  const [code, setCode] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+
+  const loadSample = () => {
+    setTab("paste");
+    setCode(SAMPLE_HEALTHCARE_POLICY);
+    if (!title) setTitle("Acme Health — Patient Triage Chatbot Policy v2.1");
+    if (!description) setDescription("LLM symptom triage assistant, US HIPAA scope. Quarterly clinical informatics review.");
+    setScenarios((cur) => {
+      const next = new Set(cur);
+      next.add("healthcare_codegen");
+      next.add("hr_behavior");
+      next.delete("general");
+      return Array.from(next) as Scenario[];
+    });
+    toast.success("Sample healthcare policy loaded");
+  };
 
   const toggle = (s: Scenario) =>
     setScenarios((cur) => cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]);
@@ -36,9 +133,9 @@ const Submit = () => {
     e.preventDefault();
     if (!user) return;
     const fd = new FormData(e.currentTarget);
-    const title = String(fd.get("title") ?? "").trim();
-    const description = String(fd.get("description") ?? "").trim();
-    if (!title) { toast.error("Title required"); return; }
+    const titleVal = title.trim();
+    const descVal = description.trim();
+    if (!titleVal) { toast.error("Title required"); return; }
     if (scenarios.length === 0) { toast.error("Select at least one scenario"); return; }
 
     setBusy(true);
@@ -47,7 +144,6 @@ const Submit = () => {
       let source_url: string | null = null;
 
       if (tab === "paste") {
-        const code = String(fd.get("code") ?? "");
         if (!code.trim()) throw new Error("Paste your policy code");
         artifacts = [{ file_path: "policy.rego", language: "rego", content: code.slice(0, 200_000) }];
       } else if (tab === "upload") {
@@ -71,7 +167,7 @@ const Submit = () => {
         .from("reviews")
         .insert({
           submitter_id: user.id,
-          title, description,
+          title: titleVal, description: descVal,
           source_type: tab,
           source_url,
           scenarios,
@@ -106,18 +202,25 @@ const Submit = () => {
   return (
     <AppShell>
       <div className="p-8 max-w-3xl mx-auto">
-        <h1 className="text-2xl font-semibold tracking-tight">New review</h1>
-        <p className="text-sm text-muted-foreground mb-6">Submit a policy-as-code bundle for end-to-end agentic review.</p>
+        <div className="flex items-start justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">New review</h1>
+            <p className="text-sm text-muted-foreground">Submit a policy-as-code bundle for end-to-end agentic review.</p>
+          </div>
+          <Button type="button" variant="outline" size="sm" onClick={loadSample}>
+            <Sparkles className="h-4 w-4 mr-1.5" /> Load sample
+          </Button>
+        </div>
 
         <form onSubmit={submit} className="space-y-5">
           <div className="grid md:grid-cols-2 gap-4">
             <div>
               <Label>Title</Label>
-              <Input name="title" required placeholder="e.g. OpenCLAW deployment policy v0.3" />
+              <Input name="title" required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. OpenCLAW deployment policy v0.3" />
             </div>
             <div>
               <Label>Description (optional)</Label>
-              <Input name="description" placeholder="Context for reviewers" />
+              <Input name="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Context for reviewers" />
             </div>
           </div>
 
@@ -147,7 +250,7 @@ const Submit = () => {
             </TabsList>
             <TabsContent value="paste">
               <Label className="mt-3 block">Policy code (Rego / YAML / JSON / Cedar)</Label>
-              <Textarea name="code" rows={12} className="font-mono text-xs" placeholder={'package aigovops.example\n\ndefault allow = false\n\nallow {\n  input.actor.role == "reviewer"\n}'} />
+              <Textarea name="code" rows={12} value={code} onChange={(e) => setCode(e.target.value)} className="font-mono text-xs" placeholder={'package aigovops.example\n\ndefault allow = false\n\nallow {\n  input.actor.role == "reviewer"\n}'} />
             </TabsContent>
             <TabsContent value="upload">
               <Label className="mt-3 block">Files (.rego, .yaml, .json, .cedar, .md)</Label>
