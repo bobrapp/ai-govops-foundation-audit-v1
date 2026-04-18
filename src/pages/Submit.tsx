@@ -772,6 +772,15 @@ const PRESETS: Preset[] = [
     scenarios: ["enterprise_oss", "hr_behavior"],
     code: SAMPLE_SUPPORT_AGENT_POLICY,
   },
+  {
+    id: "autonomous_agent",
+    label: "Autonomous planning agent",
+    desc: "OWASP LLM07/08 · planner caps · tool registry · kill switch · dual-control",
+    title: "Helios Logistics — Autonomous Planning Agent Policy v0.6",
+    description: "Long-horizon agent with planner + memory + multi-tool orchestration. Agent Safety Office owned (SRE + Security + Legal).",
+    scenarios: ["enterprise_oss"],
+    code: SAMPLE_AUTONOMOUS_AGENT_POLICY,
+  },
 ];
 
 const SCENARIOS: { id: Scenario; label: string; desc: string }[] = [
