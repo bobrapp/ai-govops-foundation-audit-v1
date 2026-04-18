@@ -544,6 +544,178 @@ audit_required {
 retention_days := 365  # 1 year, redacted transcripts only
 `;
 
+const SAMPLE_AUTONOMOUS_AGENT_POLICY = `package aigovops.autonomous.agent
+
+# Helios Logistics — Autonomous Planning Agent Policy v0.6
+# Owner: Agent Safety Office (joint: SRE, Security, Legal)
+# Scope: long-horizon agent with planner + memory + multi-tool orchestration
+# Maps to: OWASP LLM07 (Insecure Plugin/Tool Use), LLM08 (Excessive Agency),
+#          NIST AI RMF MANAGE-2.3, ISO 42001 8.3, EU AI Act Art. 14 (human oversight)
+
+default allow_plan_execution = false
+default allow_tool_call      = false
+default allow_memory_write   = false
+
+# ---------- 1. Planner constraints (LLM08: Excessive Agency) ----------
+
+max_plan_depth        := 8        # hard ceiling on recursive sub-goals
+max_plan_steps        := 25       # ceiling per top-level goal
+max_wallclock_minutes := 30       # forced re-planning checkpoint
+max_tool_calls_per_run := 40
+max_spend_usd_per_run  := 5.00    # any tool with cost meter
+
+planner_violation[msg] {
+  input.plan.depth > max_plan_depth
+  msg := sprintf("plan depth %d exceeds max %d", [input.plan.depth, max_plan_depth])
+}
+planner_violation[msg] {
+  count(input.plan.steps) > max_plan_steps
+  msg := sprintf("plan has %d steps, max %d", [count(input.plan.steps), max_plan_steps])
+}
+planner_violation[msg] {
+  input.plan.estimated_spend_usd > max_spend_usd_per_run
+  msg := sprintf("estimated spend $%.2f exceeds cap $%.2f", [input.plan.estimated_spend_usd, max_spend_usd_per_run])
+}
+
+# Goal must be human-supplied and signed; agent cannot self-assign new top-level goals
+planner_violation["self-assigned goal — no human principal signature"] {
+  not input.plan.goal.principal_signature
+}
+
+# ---------- 2. Tool registry & allowlist (LLM07) ----------
+
+tool_registry := {
+  "kb.search":           {"risk": "low",    "hitl": false, "rate_per_min": 60},
+  "warehouse.read":      {"risk": "low",    "hitl": false, "rate_per_min": 30},
+  "route.simulate":      {"risk": "low",    "hitl": false, "rate_per_min": 20},
+  "shipment.reschedule": {"risk": "medium", "hitl": false, "rate_per_min": 10},
+  "carrier.book":        {"risk": "high",   "hitl": true,  "rate_per_min": 5},
+  "payment.authorize":   {"risk": "critical","hitl": true, "rate_per_min": 2, "dual_control": true},
+  "email.send_external": {"risk": "high",   "hitl": true,  "rate_per_min": 5},
+  "code.execute":        {"risk": "critical","hitl": true, "rate_per_min": 1, "sandbox_only": true},
+}
+
+tool_violation[msg] {
+  not tool_registry[input.tool.name]
+  msg := sprintf("tool %q not in registry — allowlist denied", [input.tool.name])
+}
+
+# Critical tools require dual-control (two human approvers)
+tool_violation[msg] {
+  reg := tool_registry[input.tool.name]
+  reg.dual_control
+  count(input.tool.approvals) < 2
+  msg := sprintf("tool %q requires dual-control, got %d approvals", [input.tool.name, count(input.tool.approvals)])
+}
+
+# HITL gate: high/critical tools must have explicit human approval token
+tool_violation[msg] {
+  reg := tool_registry[input.tool.name]
+  reg.hitl
+  not input.tool.human_approval_token
+  msg := sprintf("tool %q requires human approval (HITL), none provided", [input.tool.name])
+}
+
+# Sandbox enforcement for code execution
+tool_violation["code.execute must run in sandbox"] {
+  input.tool.name == "code.execute"
+  not input.tool.sandbox_id
+}
+
+# Per-tool rate limit
+tool_violation[msg] {
+  reg := tool_registry[input.tool.name]
+  input.tool.calls_in_last_minute > reg.rate_per_min
+  msg := sprintf("tool %q rate %d/min exceeds %d/min", [input.tool.name, input.tool.calls_in_last_minute, reg.rate_per_min])
+}
+
+allow_tool_call {
+  count(tool_violation) == 0
+  not input.kill_switch.engaged
+}
+
+# ---------- 3. Memory hygiene (LLM07/LLM08 cross-cutting) ----------
+
+# Long-term memory must be scoped, signed, and PII-scrubbed before write
+memory_violation["unsanitized PII in memory write"] {
+  re_match("[0-9]{3}-[0-9]{2}-[0-9]{4}", input.memory.content)  # SSN
+}
+memory_violation["unsanitized PAN in memory write"] {
+  re_match("[0-9]{13,19}", input.memory.content)
+}
+memory_violation["memory write missing principal scope"] {
+  not input.memory.scope.principal_id
+}
+memory_violation["memory write exceeds TTL ceiling"] {
+  input.memory.ttl_days > 90
+}
+
+# Reflection / self-modification of system prompt is forbidden at runtime
+memory_violation["agent attempted to mutate its own system prompt"] {
+  input.memory.target == "system_prompt"
+}
+
+allow_memory_write { count(memory_violation) == 0 }
+
+# ---------- 4. Plan-execution gate ----------
+
+allow_plan_execution {
+  count(planner_violation) == 0
+  input.plan.dry_run_passed
+  input.plan.cost_estimate_signed_off
+  input.plan.principal_id != ""
+  not input.kill_switch.engaged
+}
+
+# ---------- 5. Kill switch & circuit breakers (LLM08) ----------
+
+# Operators must be able to halt any agent run within 5 seconds
+kill_switch_required {
+  input.run.kind in {"autonomous", "scheduled", "long_horizon"}
+}
+
+circuit_breaker_trip[reason] {
+  input.run.consecutive_tool_errors >= 3
+  reason := "3+ consecutive tool errors — auto-halt"
+}
+circuit_breaker_trip[reason] {
+  input.run.spend_usd > max_spend_usd_per_run
+  reason := sprintf("spend cap exceeded: $%.2f", [input.run.spend_usd])
+}
+circuit_breaker_trip["wallclock checkpoint hit — require re-plan approval"] {
+  input.run.elapsed_minutes >= max_wallclock_minutes
+}
+
+# ---------- 6. Observability / audit ----------
+
+audit_required {
+  input.action in {"plan", "tool_call", "memory_write", "reflect", "delegate"}
+}
+
+# Every tool call must emit a signed trace event with parent plan id + step id
+trace_violation["tool call missing plan_id linkage"] {
+  input.action == "tool_call"
+  not input.trace.plan_id
+}
+trace_violation["tool call missing step_id linkage"] {
+  input.action == "tool_call"
+  not input.trace.step_id
+}
+
+# ---------- 7. Sub-agent / delegation guardrails ----------
+
+# Spawned sub-agents inherit principal but cannot escalate tool tier
+delegation_violation[msg] {
+  input.delegation.child_tool_tier > input.delegation.parent_tool_tier
+  msg := sprintf("sub-agent requested tier %d, parent tier %d — escalation denied", [input.delegation.child_tool_tier, input.delegation.parent_tool_tier])
+}
+delegation_violation["delegation depth exceeds 2"] {
+  input.delegation.depth > 2
+}
+
+retention_days := 730  # 2 yr signed agent traces (incident forensics)
+`;
+
 type Preset = {
   id: string;
   label: string;
