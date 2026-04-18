@@ -591,6 +591,15 @@ const PRESETS: Preset[] = [
     scenarios: ["hr_behavior"],
     code: SAMPLE_HR_EEOC_POLICY,
   },
+  {
+    id: "support_agent",
+    label: "Gen-AI customer support agent",
+    desc: "OWASP LLM01/06/07 · prompt injection · PII redaction · tool guardrails",
+    title: "Vega Telecom — Support Agent Policy v0.9",
+    description: "LLM chat agent with tool access (refund, account, KB). Trust & Safety + Customer Ops owned. Monthly red-team review.",
+    scenarios: ["enterprise_oss", "hr_behavior"],
+    code: SAMPLE_SUPPORT_AGENT_POLICY,
+  },
 ];
 
 const SCENARIOS: { id: Scenario; label: string; desc: string }[] = [
