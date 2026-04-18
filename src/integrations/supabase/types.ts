@@ -72,28 +72,37 @@ export type Database = {
           actor_id: string | null
           actor_kind: string
           created_at: string
+          entry_hash: string | null
           event: string
           id: string
           payload: Json
+          prev_hash: string | null
           review_id: string | null
+          signature: string | null
         }
         Insert: {
           actor_id?: string | null
           actor_kind: string
           created_at?: string
+          entry_hash?: string | null
           event: string
           id?: string
           payload?: Json
+          prev_hash?: string | null
           review_id?: string | null
+          signature?: string | null
         }
         Update: {
           actor_id?: string | null
           actor_kind?: string
           created_at?: string
+          entry_hash?: string | null
           event?: string
           id?: string
           payload?: Json
+          prev_hash?: string | null
           review_id?: string | null
+          signature?: string | null
         }
         Relationships: [
           {
@@ -241,12 +250,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _target_user: string
+        }
+        Returns: undefined
+      }
+      claim_first_admin: { Args: never; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      revoke_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _target_user: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
