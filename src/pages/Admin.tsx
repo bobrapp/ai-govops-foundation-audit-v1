@@ -5,7 +5,7 @@ import { useRoles, AppRole } from "@/hooks/useRoles";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ShieldCheck, UserCog, Crown, Loader2, KeyRound, Sparkles } from "lucide-react";
+import { ShieldCheck, UserCog, Crown, Loader2, KeyRound, Sparkles, Trash2 } from "lucide-react";
 
 interface Member {
   id: string;
