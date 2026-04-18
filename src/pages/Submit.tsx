@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { Loader2, GitBranch, FileCode, UploadCloud, Sparkles } from "lucide-react";
+import { Loader2, GitBranch, FileCode, UploadCloud, Sparkles, ChevronDown } from "lucide-react";
 
 type Scenario = "enterprise_oss" | "healthcare_codegen" | "generative_ip" | "hr_behavior" | "general";
 
@@ -93,6 +94,208 @@ deny[msg] {
 }
 `;
 
+const SAMPLE_GENERATIVE_IP_POLICY = `package aigovops.generative_ip.music_model
+
+# Harmonia Labs — Generative Music Model Release Policy v1.4
+# Scope: Text-to-music foundation model, public API + B2B licensing.
+# Owner: IP & Trust Office · Reviewed every release.
+
+default allow = false
+
+# ---------------------------------------------------------------
+# Training data provenance
+# ---------------------------------------------------------------
+deny[msg] {
+  some t
+  t := input.training_corpus[_]
+  not t.license in {"CC0", "CC-BY", "licensed_commercial", "public_domain"}
+  msg := sprintf("Track %v has unverified license %v — block release.", [t.id, t.license])
+}
+
+deny[msg] {
+  not input.dataset.c2pa_manifest_signed
+  msg := "C2PA provenance manifest unsigned — provenance chain broken."
+}
+
+# ---------------------------------------------------------------
+# Output controls — copyright & artist consent
+# ---------------------------------------------------------------
+deny[msg] {
+  input.generation.style_prompt_matches_living_artist == true
+  not input.generation.artist_opt_in == true
+  msg := "Style mimicry of living artist without opt-in — DMCA / right-of-publicity exposure."
+}
+
+deny[msg] {
+  input.generation.melodic_similarity_score > 0.85
+  msg := "Output exceeds 85% melodic similarity to corpus track — likely substantial similarity."
+}
+
+# ---------------------------------------------------------------
+# Watermark & attribution
+# ---------------------------------------------------------------
+require_watermark {
+  input.action == "publish_audio"
+}
+
+deny[msg] {
+  require_watermark
+  not input.output.audio_watermark_embedded
+  msg := "Inaudible watermark required on every published clip (per C2PA + EU AI Act Art. 50)."
+}
+
+# ---------------------------------------------------------------
+# Royalty & ledger
+# ---------------------------------------------------------------
+deny[msg] {
+  input.commercial_use == true
+  not input.royalty_split_ledger_id
+  msg := "Commercial use requires royalty-split ledger entry before generation."
+}
+
+allow {
+  input.actor.role == "licensee"
+  input.actor.kyc_verified == true
+  input.action == "generate_audio"
+  input.generation.melodic_similarity_score <= 0.85
+}
+
+# ---------------------------------------------------------------
+# Audit
+# ---------------------------------------------------------------
+audit_required {
+  input.action in {"generate_audio", "publish_audio", "license_grant"}
+}
+
+retention_days := 1825  # 5 years for IP defense
+`;
+
+const SAMPLE_ENTERPRISE_OSS_POLICY = `package aigovops.enterprise_oss.vector_db
+
+# Globex Bank — Vector DB & Embedding Model Adoption Policy v0.7
+# Scope: Self-hosted pgvector + open-weights embedding models for internal RAG.
+# Owner: Platform Security & Model Risk Mgmt (SR 11-7 aligned).
+
+default allow = false
+
+# ---------------------------------------------------------------
+# Supply chain — SBOM / SLSA
+# ---------------------------------------------------------------
+deny[msg] {
+  not input.component.sbom_present
+  msg := sprintf("Component %v missing SBOM — block deployment.", [input.component.name])
+}
+
+deny[msg] {
+  input.component.slsa_level < 3
+  msg := sprintf("SLSA level %v < required 3 for production data plane.", [input.component.slsa_level])
+}
+
+deny[msg] {
+  some cve
+  cve := input.component.cves[_]
+  cve.severity in {"high", "critical"}
+  not cve.mitigated
+  msg := sprintf("Unmitigated %v CVE %v in %v.", [cve.severity, cve.id, input.component.name])
+}
+
+# ---------------------------------------------------------------
+# Model weights — provenance & licensing
+# ---------------------------------------------------------------
+deny[msg] {
+  not input.model.weights_sha256_pinned
+  msg := "Open-weights model must be SHA256-pinned — floating tags forbidden in prod."
+}
+
+deny[msg] {
+  not input.model.license in {"Apache-2.0", "MIT", "Llama-3-Community", "commercial"}
+  msg := sprintf("Model license %v not on approved list.", [input.model.license])
+}
+
+# ---------------------------------------------------------------
+# Data classification & tenancy
+# ---------------------------------------------------------------
+deny[msg] {
+  input.collection.data_class in {"PII", "MNPI", "regulated"}
+  not input.collection.tenant_isolated
+  msg := "Sensitive collection requires per-tenant isolation (separate schema or DB)."
+}
+
+deny[msg] {
+  input.action == "embed"
+  input.payload.contains_mnpi == true
+  not input.actor.entitlements[_] == "mnpi_cleared"
+  msg := "MNPI embedding requires cleared actor."
+}
+
+# ---------------------------------------------------------------
+# Egress & network controls
+# ---------------------------------------------------------------
+deny[msg] {
+  input.deployment.egress_allowed == true
+  msg := "Vector DB egress to internet must be blocked at NSG layer."
+}
+
+allow {
+  input.actor.role in {"platform_engineer", "rag_service"}
+  input.action in {"query", "embed", "upsert"}
+  input.component.sbom_present
+  input.component.slsa_level >= 3
+  input.model.weights_sha256_pinned
+}
+
+# ---------------------------------------------------------------
+# Change mgmt & audit (SR 11-7)
+# ---------------------------------------------------------------
+deny[msg] {
+  input.action == "deploy"
+  not input.change_ticket.approved
+  msg := "Production deploy requires approved change ticket per SR 11-7."
+}
+
+retention_days := 2555  # 7 years for banking
+`;
+
+type Preset = {
+  id: string;
+  label: string;
+  desc: string;
+  title: string;
+  description: string;
+  scenarios: Scenario[];
+  code: string;
+};
+
+const PRESETS: Preset[] = [
+  {
+    id: "healthcare",
+    label: "Healthcare triage chatbot",
+    desc: "HIPAA · clinical informatics · PHI minimization",
+    title: "Acme Health — Patient Triage Chatbot Policy v2.1",
+    description: "LLM symptom triage assistant, US HIPAA scope. Quarterly clinical informatics review.",
+    scenarios: ["healthcare_codegen", "hr_behavior"],
+    code: SAMPLE_HEALTHCARE_POLICY,
+  },
+  {
+    id: "generative_ip",
+    label: "Generative music model",
+    desc: "C2PA · DMCA · royalty ledger · watermark",
+    title: "Harmonia Labs — Generative Music Model Release Policy v1.4",
+    description: "Text-to-music foundation model, public API + B2B licensing. IP & Trust Office owned.",
+    scenarios: ["generative_ip"],
+    code: SAMPLE_GENERATIVE_IP_POLICY,
+  },
+  {
+    id: "enterprise_oss",
+    label: "Enterprise vector DB / OSS",
+    desc: "SBOM · SLSA L3 · SR 11-7 · pinned weights",
+    title: "Globex Bank — Vector DB & Embedding Adoption Policy v0.7",
+    description: "Self-hosted pgvector + open-weights embeddings for internal RAG. SR 11-7 aligned.",
+    scenarios: ["enterprise_oss"],
+    code: SAMPLE_ENTERPRISE_OSS_POLICY,
+  },
+];
+
 const SCENARIOS: { id: Scenario; label: string; desc: string }[] = [
   { id: "enterprise_oss", label: "Enterprise OSS adoption", desc: "OpenCLAW, vector DBs, foundation models inside a regulated org." },
   { id: "healthcare_codegen", label: "Healthcare codegen", desc: "AI generating or touching code in HIPAA / FDA settings." },
@@ -111,19 +314,13 @@ const Submit = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
-  const loadSample = () => {
+  const loadPreset = (preset: Preset) => {
     setTab("paste");
-    setCode(SAMPLE_HEALTHCARE_POLICY);
-    if (!title) setTitle("Acme Health — Patient Triage Chatbot Policy v2.1");
-    if (!description) setDescription("LLM symptom triage assistant, US HIPAA scope. Quarterly clinical informatics review.");
-    setScenarios((cur) => {
-      const next = new Set(cur);
-      next.add("healthcare_codegen");
-      next.add("hr_behavior");
-      next.delete("general");
-      return Array.from(next) as Scenario[];
-    });
-    toast.success("Sample healthcare policy loaded");
+    setCode(preset.code);
+    setTitle(preset.title);
+    setDescription(preset.description);
+    setScenarios(preset.scenarios);
+    toast.success(`Loaded: ${preset.label}`);
   };
 
   const toggle = (s: Scenario) =>
@@ -207,9 +404,23 @@ const Submit = () => {
             <h1 className="text-2xl font-semibold tracking-tight">New review</h1>
             <p className="text-sm text-muted-foreground">Submit a policy-as-code bundle for end-to-end agentic review.</p>
           </div>
-          <Button type="button" variant="outline" size="sm" onClick={loadSample}>
-            <Sparkles className="h-4 w-4 mr-1.5" /> Load sample
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" variant="outline" size="sm">
+                <Sparkles className="h-4 w-4 mr-1.5" /> Load sample <ChevronDown className="h-4 w-4 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-72">
+              <DropdownMenuLabel>Pre-built policy presets</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {PRESETS.map((p) => (
+                <DropdownMenuItem key={p.id} onClick={() => loadPreset(p)} className="flex flex-col items-start gap-0.5 py-2">
+                  <span className="text-sm font-medium">{p.label}</span>
+                  <span className="text-xs text-muted-foreground">{p.desc}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <form onSubmit={submit} className="space-y-5">
