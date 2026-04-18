@@ -242,6 +242,24 @@ Deno.serve(async (req) => {
       .order("control_id");
     const controlCatalog = catalogRows ?? [];
 
+    // Load scenario packs matching this review's tagged scenarios
+    const reviewScenarios: string[] = (review.scenarios ?? []).filter((s: string) => s !== "general");
+    let scenarioPackText = "";
+    if (reviewScenarios.length) {
+      const { data: packs } = await admin
+        .from("scenario_packs").select("scenario, name, scenario_pack_controls(control_ref, framework, objective, severity_if_missing, aos_control_hint)")
+        .in("scenario", reviewScenarios);
+      if (packs?.length) {
+        scenarioPackText = "\n\n--- ACTIVE SCENARIO RULE PACKS (every listed control MUST be evaluated) ---\n" +
+          packs.map((p: any) => {
+            const items = (p.scenario_pack_controls ?? []).map((c: any) =>
+              `  • [${c.framework}] ${c.control_ref} — ${c.objective} (severity if missing: ${c.severity_if_missing}${c.aos_control_hint ? `, hint→${c.aos_control_hint}` : ""})`,
+            ).join("\n");
+            return `### ${p.name} [${p.scenario}]\n${items}`;
+          }).join("\n\n");
+      }
+    }
+
     await admin.from("reviews").update({ status: "analyzing" }).eq("id", reviewId);
     await insertSignedAudit(admin, signingKey, {
       review_id: reviewId,
@@ -259,7 +277,7 @@ Deno.serve(async (req) => {
 
     for (const agent of AGENTS) {
       try {
-        const result = await callGatewayWithTool(agent, policyText, review.scenarios ?? [], apiKey, controlCatalog);
+        const result = await callGatewayWithTool(agent, policyText + scenarioPackText, review.scenarios ?? [], apiKey, controlCatalog);
         totalScore += result.score;
         agentsRun++;
 

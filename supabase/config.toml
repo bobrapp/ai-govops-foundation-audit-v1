@@ -11,3 +11,9 @@ verify_jwt = true
 
 [functions.sign-decision]
 verify_jwt = true
+
+[functions.verify-chain]
+verify_jwt = false
+
+[functions.issue-attestation]
+verify_jwt = true

@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
 import { EngagementPanel } from "@/components/EngagementPanel";
+import { CompensatingControlsPanel } from "@/components/CompensatingControlsPanel";
+import { AttestationPanel } from "@/components/AttestationPanel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -139,11 +141,21 @@ const ReviewDetail = () => {
             <TabsTrigger value="artifacts">Artifacts ({artifacts.length})</TabsTrigger>
             <TabsTrigger value="audit">Audit log ({audit.length})</TabsTrigger>
             <TabsTrigger value="engagement">QAGA</TabsTrigger>
+            <TabsTrigger value="compensations">Compensations</TabsTrigger>
+            <TabsTrigger value="attestation">Attestation</TabsTrigger>
             <TabsTrigger value="decision">Decision</TabsTrigger>
           </TabsList>
 
           <TabsContent value="engagement" className="mt-4">
             <EngagementPanel reviewId={id!} />
+          </TabsContent>
+
+          <TabsContent value="compensations" className="mt-4">
+            <CompensatingControlsPanel reviewId={id!} findings={findings} />
+          </TabsContent>
+
+          <TabsContent value="attestation" className="mt-4">
+            <AttestationPanel reviewId={id!} />
           </TabsContent>
 
           <TabsContent value="findings" className="mt-4 space-y-4">

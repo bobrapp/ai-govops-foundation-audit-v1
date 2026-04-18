@@ -16,6 +16,7 @@ import AosCatalog from "./pages/AosCatalog";
 import Registry from "./pages/Registry";
 import MyAssessor from "./pages/MyAssessor";
 import Firms from "./pages/Firms";
+import Verify from "./pages/Verify";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/registry" element={<Registry />} />
+            <Route path="/verify/:reviewId" element={<Verify />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/submit" element={<ProtectedRoute><Submit /></ProtectedRoute>} />
             <Route path="/review/:id" element={<ProtectedRoute><ReviewDetail /></ProtectedRoute>} />

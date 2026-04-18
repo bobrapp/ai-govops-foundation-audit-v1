@@ -211,6 +211,82 @@ export type Database = {
           },
         ]
       }
+      attestations: {
+        Row: {
+          aos_version: string
+          determination: string
+          id: string
+          issued_at: string
+          issued_by: string
+          organization: string
+          pdf_path: string | null
+          pdf_sha256: string | null
+          prev_audit_hash: string | null
+          qaga_assessor_id: string | null
+          qaga_firm_id: string | null
+          review_id: string
+          scenarios: Database["public"]["Enums"]["scenario_tag"][]
+          scope_statement: string
+          signature: string | null
+        }
+        Insert: {
+          aos_version: string
+          determination: string
+          id?: string
+          issued_at?: string
+          issued_by: string
+          organization: string
+          pdf_path?: string | null
+          pdf_sha256?: string | null
+          prev_audit_hash?: string | null
+          qaga_assessor_id?: string | null
+          qaga_firm_id?: string | null
+          review_id: string
+          scenarios?: Database["public"]["Enums"]["scenario_tag"][]
+          scope_statement: string
+          signature?: string | null
+        }
+        Update: {
+          aos_version?: string
+          determination?: string
+          id?: string
+          issued_at?: string
+          issued_by?: string
+          organization?: string
+          pdf_path?: string | null
+          pdf_sha256?: string | null
+          prev_audit_hash?: string | null
+          qaga_assessor_id?: string | null
+          qaga_firm_id?: string | null
+          review_id?: string
+          scenarios?: Database["public"]["Enums"]["scenario_tag"][]
+          scope_statement?: string
+          signature?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attestations_qaga_assessor_id_fkey"
+            columns: ["qaga_assessor_id"]
+            isOneToOne: false
+            referencedRelation: "qaga_assessors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attestations_qaga_firm_id_fkey"
+            columns: ["qaga_firm_id"]
+            isOneToOne: false
+            referencedRelation: "qagac_firms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attestations_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: true
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           actor_id: string | null
@@ -251,6 +327,57 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "audit_log_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compensating_controls: {
+        Row: {
+          aos_control_id: string | null
+          evidence_url: string | null
+          finding_id: string | null
+          id: string
+          rationale: string
+          recorded_at: string
+          recorded_by: string
+          review_id: string
+          status: string
+        }
+        Insert: {
+          aos_control_id?: string | null
+          evidence_url?: string | null
+          finding_id?: string | null
+          id?: string
+          rationale: string
+          recorded_at?: string
+          recorded_by: string
+          review_id: string
+          status?: string
+        }
+        Update: {
+          aos_control_id?: string | null
+          evidence_url?: string | null
+          finding_id?: string | null
+          id?: string
+          rationale?: string
+          recorded_at?: string
+          recorded_by?: string
+          review_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compensating_controls_finding_id_fkey"
+            columns: ["finding_id"]
+            isOneToOne: false
+            referencedRelation: "agent_findings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compensating_controls_review_id_fkey"
             columns: ["review_id"]
             isOneToOne: false
             referencedRelation: "reviews"
@@ -519,6 +646,77 @@ export type Database = {
         }
         Relationships: []
       }
+      scenario_pack_controls: {
+        Row: {
+          aos_control_hint: string | null
+          control_ref: string
+          created_at: string
+          framework: string
+          id: string
+          objective: string
+          pack_id: string
+          severity_if_missing: Database["public"]["Enums"]["severity"]
+        }
+        Insert: {
+          aos_control_hint?: string | null
+          control_ref: string
+          created_at?: string
+          framework: string
+          id?: string
+          objective: string
+          pack_id: string
+          severity_if_missing?: Database["public"]["Enums"]["severity"]
+        }
+        Update: {
+          aos_control_hint?: string | null
+          control_ref?: string
+          created_at?: string
+          framework?: string
+          id?: string
+          objective?: string
+          pack_id?: string
+          severity_if_missing?: Database["public"]["Enums"]["severity"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scenario_pack_controls_pack_id_fkey"
+            columns: ["pack_id"]
+            isOneToOne: false
+            referencedRelation: "scenario_packs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scenario_packs: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          name: string
+          scenario: Database["public"]["Enums"]["scenario_tag"]
+          status: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          name: string
+          scenario: Database["public"]["Enums"]["scenario_tag"]
+          status?: string
+          version?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          name?: string
+          scenario?: Database["public"]["Enums"]["scenario_tag"]
+          status?: string
+          version?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -554,12 +752,31 @@ export type Database = {
         Returns: undefined
       }
       claim_first_admin: { Args: never; Returns: boolean }
+      compute_conformance: { Args: { _review_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      issue_attestation: {
+        Args: {
+          _organization: string
+          _review_id: string
+          _scope_statement: string
+        }
+        Returns: string
+      }
+      record_compensating_control: {
+        Args: {
+          _aos_control_id: string
+          _evidence_url: string
+          _finding_id: string
+          _rationale: string
+          _review_id: string
+        }
+        Returns: string
       }
       request_engagement: {
         Args: { _assessor_id: string; _review_id: string }
