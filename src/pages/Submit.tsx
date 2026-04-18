@@ -256,6 +256,131 @@ deny[msg] {
 retention_days := 2555  # 7 years for banking
 `;
 
+const SAMPLE_HR_EEOC_POLICY = `package aigovops.hr.resume_ranker
+
+# TalentForge — AI Resume Ranking Tool Policy v1.2
+# Scope: ML-assisted candidate ranking for US hiring (Title VII, ADEA, ADA, NYC LL-144, EEOC).
+# Owner: People Ops + Legal · Independent bias audit annually.
+
+default allow = false
+
+# ---------------------------------------------------------------
+# Protected attributes — strict exclusion from features
+# ---------------------------------------------------------------
+protected_classes := {
+  "race", "ethnicity", "national_origin", "sex", "gender_identity",
+  "sexual_orientation", "age", "disability", "pregnancy", "religion",
+  "veteran_status", "marital_status", "genetic_info"
+}
+
+deny[msg] {
+  some f
+  f := input.model.features[_]
+  f.name in protected_classes
+  msg := sprintf("Feature %v is a protected class — must not be a model input.", [f.name])
+}
+
+# Proxy detection — block known proxies for protected classes
+known_proxies := {
+  "zip_code", "high_school_name", "college_greek_letter_org",
+  "voice_pitch", "name_origin_score", "photo_attractiveness"
+}
+
+deny[msg] {
+  some f
+  f := input.model.features[_]
+  f.name in known_proxies
+  msg := sprintf("Feature %v is a known proxy for a protected class — block.", [f.name])
+}
+
+# ---------------------------------------------------------------
+# Adverse impact — Four-Fifths Rule (EEOC Uniform Guidelines §1607.4D)
+# ---------------------------------------------------------------
+adverse_impact_threshold := 0.80
+
+deny[msg] {
+  some g
+  g := input.audit.selection_rates[_]
+  g.group != "reference"
+  g.rate / input.audit.selection_rates_reference < adverse_impact_threshold
+  msg := sprintf("Adverse impact: group %v selection ratio %.2f < 0.80 (4/5 rule).",
+    [g.group, g.rate / input.audit.selection_rates_reference])
+}
+
+# Statistical significance — flag disparities even above 4/5 if N is large
+deny[msg] {
+  some g
+  g := input.audit.selection_rates[_]
+  g.p_value < 0.05
+  g.effect_size > 0.2
+  msg := sprintf("Statistically significant disparity for group %v (p=%.3f, d=%.2f).",
+    [g.group, g.p_value, g.effect_size])
+}
+
+# ---------------------------------------------------------------
+# NYC Local Law 144 — independent bias audit, annual, public summary
+# ---------------------------------------------------------------
+deny[msg] {
+  input.deployment.jurisdiction == "NYC"
+  input.audit.last_independent_audit_days_ago > 365
+  msg := "NYC LL-144: independent bias audit must be < 365 days old."
+}
+
+deny[msg] {
+  input.deployment.jurisdiction == "NYC"
+  not input.audit.public_summary_url
+  msg := "NYC LL-144: public bias-audit summary URL required on careers page."
+}
+
+# ---------------------------------------------------------------
+# Candidate notice & opt-out
+# ---------------------------------------------------------------
+deny[msg] {
+  not input.candidate.aeds_notice_shown
+  msg := "Candidates must be notified that an Automated Employment Decision System is used."
+}
+
+deny[msg] {
+  input.candidate.requested_human_review == true
+  input.action == "auto_reject"
+  msg := "Candidate requested human review — auto-reject blocked, route to recruiter."
+}
+
+# ---------------------------------------------------------------
+# Human-in-the-loop & explainability
+# ---------------------------------------------------------------
+deny[msg] {
+  input.action == "final_decision"
+  not input.actor.role == "human_recruiter"
+  msg := "Final hiring decision must be made by a human recruiter, not the model."
+}
+
+deny[msg] {
+  input.action in {"shortlist", "rank"}
+  not input.model.shap_explanation_available
+  msg := "Per-candidate SHAP explanation must be available for recruiter review."
+}
+
+# ---------------------------------------------------------------
+# Allowed actions — model may rank, never decide
+# ---------------------------------------------------------------
+allow {
+  input.actor.role == "human_recruiter"
+  input.action in {"shortlist", "rank", "view_explanation"}
+  input.candidate.aeds_notice_shown
+  input.model.last_bias_audit_days_ago <= 365
+}
+
+# ---------------------------------------------------------------
+# Audit & retention
+# ---------------------------------------------------------------
+audit_required {
+  input.action in {"shortlist", "rank", "auto_reject", "final_decision"}
+}
+
+retention_days := 1095  # 3 years per EEOC §1602.14
+`;
+
 type Preset = {
   id: string;
   label: string;
