@@ -22,6 +22,7 @@ const Admin = () => {
   const [adminCount, setAdminCount] = useState(0);
   const [claiming, setClaiming] = useState(false);
   const [seeding, setSeeding] = useState(false);
+  const [unseeding, setUnseeding] = useState(false);
 
   const seedDemo = async () => {
     if (!confirm("Seed demo dataset? Creates 1 firm, 2 demo QAGAs, 3 reviews. Safe to re-run.")) return;
@@ -31,6 +32,17 @@ const Admin = () => {
     if (data?.error) { toast.error(data.error); setSeeding(false); return; }
     toast.success(`Demo seeded — ${data?.reviewIds?.length ?? 0} reviews, ${data?.qagaIds?.length ?? 0} QAGAs`);
     setSeeding(false);
+    load();
+  };
+
+  const unseedDemo = async () => {
+    if (!confirm("Delete ALL demo data (firm, QAGAs, reviews, findings, attestations, auth users tagged demo:seed-v1)? This cannot be undone.")) return;
+    setUnseeding(true);
+    const { data, error } = await supabase.functions.invoke("unseed-demo");
+    if (error) { toast.error(error.message); setUnseeding(false); return; }
+    if (data?.error) { toast.error(data.error); setUnseeding(false); return; }
+    toast.success("Demo dataset removed");
+    setUnseeding(false);
     load();
   };
 
