@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.issue-attestation]
 verify_jwt = true
+
+[functions.backfill-attestation-pdfs]
+verify_jwt = true
