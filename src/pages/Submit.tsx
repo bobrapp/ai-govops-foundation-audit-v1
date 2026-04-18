@@ -167,7 +167,7 @@ const Submit = () => {
         .from("reviews")
         .insert({
           submitter_id: user.id,
-          title, description,
+          title: titleVal, description: descVal,
           source_type: tab,
           source_url,
           scenarios,
