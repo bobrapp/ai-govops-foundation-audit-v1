@@ -1,6 +1,8 @@
 // AIGovOps multi-agent review pipeline.
 // Calls Lovable AI Gateway with structured tool-calling per specialist agent.
+// Every audit entry is HMAC-signed and chained.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { insertSignedAudit } from "../_shared/audit.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -177,14 +179,14 @@ Deno.serve(async (req) => {
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
+    const signingKey = Deno.env.get("AUDIT_SIGNING_KEY");
+    if (!signingKey) throw new Error("AUDIT_SIGNING_KEY missing");
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const authHeader = req.headers.get("Authorization") ?? "";
 
-    // service-role client for writes (bypasses RLS for agent system)
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
-    // user client to verify ownership
     const userClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -215,7 +217,7 @@ Deno.serve(async (req) => {
         .join("\n\n") || "(no artifacts)";
 
     await admin.from("reviews").update({ status: "analyzing" }).eq("id", reviewId);
-    await admin.from("audit_log").insert({
+    await insertSignedAudit(admin, signingKey, {
       review_id: reviewId,
       actor_id: user.id,
       actor_kind: "system",
@@ -249,7 +251,7 @@ Deno.serve(async (req) => {
         }));
         if (rows.length) await admin.from("agent_findings").insert(rows);
 
-        await admin.from("audit_log").insert({
+        await insertSignedAudit(admin, signingKey, {
           review_id: reviewId,
           actor_id: user.id,
           actor_kind: "agent",
@@ -258,7 +260,7 @@ Deno.serve(async (req) => {
         });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
-        await admin.from("audit_log").insert({
+        await insertSignedAudit(admin, signingKey, {
           review_id: reviewId,
           actor_id: user.id,
           actor_kind: "agent",
@@ -274,7 +276,7 @@ Deno.serve(async (req) => {
       overall_score: overall,
     }).eq("id", reviewId);
 
-    await admin.from("audit_log").insert({
+    await insertSignedAudit(admin, signingKey, {
       review_id: reviewId,
       actor_id: user.id,
       actor_kind: "system",

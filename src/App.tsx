@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Submit from "./pages/Submit";
 import ReviewDetail from "./pages/ReviewDetail";
 import AuditLog from "./pages/AuditLog";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/submit" element={<ProtectedRoute><Submit /></ProtectedRoute>} />
             <Route path="/review/:id" element={<ProtectedRoute><ReviewDetail /></ProtectedRoute>} />
             <Route path="/audit" element={<ProtectedRoute><AuditLog /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

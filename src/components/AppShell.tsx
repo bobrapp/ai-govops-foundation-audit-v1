@@ -1,11 +1,13 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useRoles } from "@/hooks/useRoles";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, FilePlus2, Shield, LogOut, Activity } from "lucide-react";
+import { LayoutDashboard, FilePlus2, Shield, LogOut, Activity, UserCog } from "lucide-react";
 
 export const AppShell = ({ children }: { children: ReactNode }) => {
   const { user, signOut } = useAuth();
+  const { isAdmin } = useRoles();
   const nav = useNavigate();
   const loc = useLocation();
 
@@ -13,6 +15,9 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
     { to: "/dashboard", label: "Reviews", icon: LayoutDashboard },
     { to: "/submit", label: "New Review", icon: FilePlus2 },
     { to: "/audit", label: "Audit Log", icon: Activity },
+    ...(isAdmin ? [{ to: "/admin", label: "Roles & Access", icon: UserCog }] : []),
+    // Always show admin entry if no admin exists yet (bootstrap path) — page handles gating
+    ...(!isAdmin ? [{ to: "/admin", label: "Bootstrap Admin", icon: UserCog }] : []),
   ];
 
   return (
@@ -23,8 +28,8 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
             <Shield className="h-4 w-4 text-primary-foreground" />
           </div>
           <div>
-            <div className="font-semibold text-sm tracking-tight">AIGovOps</div>
-            <div className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">Review Console</div>
+            <div className="font-semibold text-sm tracking-tight">AiGovOps</div>
+            <div className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">Review Framework</div>
           </div>
         </Link>
         <nav className="flex-1 p-2 space-y-1">

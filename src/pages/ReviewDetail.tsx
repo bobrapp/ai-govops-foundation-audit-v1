@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { CheckCircle2, XCircle, RefreshCw, ShieldAlert, Loader2, FileText, ScanLine, Brain, Scale, FileLock, Activity } from "lucide-react";
+import { CheckCircle2, XCircle, RefreshCw, ShieldAlert, Loader2, FileText, ScanLine, Brain, Scale, FileLock, Activity, ShieldCheck, ShieldX } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 const sevColor: Record<string, string> = {
@@ -36,6 +36,8 @@ const ReviewDetail = () => {
   const [audit, setAudit] = useState<any[]>([]);
   const [decision, setDecision] = useState("");
   const [busy, setBusy] = useState(false);
+  const [chain, setChain] = useState<{ ok: boolean; count: number; results?: Array<{ ok: boolean; reason?: string }> } | null>(null);
+  const [verifying, setVerifying] = useState(false);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -76,13 +78,24 @@ const ReviewDetail = () => {
     await supabase.from("reviews").update({
       status: verdict, decision_notes: decision, decided_by: user.id, decided_at: new Date().toISOString(),
     }).eq("id", id);
-    await supabase.from("audit_log").insert({
-      review_id: id, actor_id: user.id, actor_kind: "user",
-      event: `human.${verdict}`, payload: { notes: decision },
+    // Server signs and inserts the audit entry into the chain
+    await supabase.functions.invoke("sign-decision", {
+      body: { reviewId: id, event: `human.${verdict}`, payload: { notes: decision } },
     });
     setBusy(false);
-    toast.success(`Review ${verdict}`);
+    toast.success(`Review ${verdict} · audit entry signed`);
+    setChain(null);
     load();
+  };
+
+  const verify = async () => {
+    if (!id) return;
+    setVerifying(true);
+    const { data, error } = await supabase.functions.invoke("audit-verify", { body: { reviewId: id } });
+    setVerifying(false);
+    if (error) { toast.error(error.message); return; }
+    setChain(data);
+    toast[data.ok ? "success" : "error"](data.ok ? "Audit chain valid" : "Audit chain INVALID");
   };
 
   if (!review) return <AppShell><div className="p-8 font-mono text-sm text-muted-foreground">loading…</div></AppShell>;
@@ -190,23 +203,56 @@ const ReviewDetail = () => {
             ))}
           </TabsContent>
 
-          <TabsContent value="audit" className="mt-4">
-            <div className="rounded-lg border border-border bg-card-grad divide-y divide-border">
-              {audit.map((e) => (
-                <div key={e.id} className="px-4 py-2.5 flex items-start gap-3 text-sm">
-                  <Activity className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs text-primary">{e.event}</span>
-                      <span className="text-[10px] font-mono uppercase text-muted-foreground">{e.actor_kind}</span>
-                    </div>
-                    {Object.keys(e.payload ?? {}).length > 0 && (
-                      <pre className="text-[10px] font-mono text-muted-foreground mt-1 overflow-x-auto">{JSON.stringify(e.payload, null, 0)}</pre>
-                    )}
+          <TabsContent value="audit" className="mt-4 space-y-3">
+            <div className="rounded-lg border border-border bg-card-grad p-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {chain ? (chain.ok
+                  ? <ShieldCheck className="h-5 w-5 text-primary" />
+                  : <ShieldX className="h-5 w-5 text-destructive" />)
+                  : <ShieldAlert className="h-5 w-5 text-muted-foreground" />}
+                <div>
+                  <div className="text-sm font-medium">
+                    {chain ? (chain.ok ? "Audit chain verified" : "Audit chain INVALID") : "HMAC-SHA256 signed audit chain"}
                   </div>
-                  <div className="text-[10px] font-mono text-muted-foreground shrink-0">{formatDistanceToNow(new Date(e.created_at), { addSuffix: true })}</div>
+                  <div className="text-[11px] font-mono text-muted-foreground">
+                    {chain ? `${chain.count} entries · ${chain.results?.filter(r => r.ok).length}/${chain.count} valid` : "Click verify to recompute every signature."}
+                  </div>
                 </div>
-              ))}
+              </div>
+              <Button onClick={verify} disabled={verifying} variant="outline" size="sm">
+                {verifying ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-1.5" />}
+                Verify chain
+              </Button>
+            </div>
+            <div className="rounded-lg border border-border bg-card-grad divide-y divide-border">
+              {audit.map((e, idx) => {
+                const verdict = chain?.results?.[audit.length - 1 - idx];
+                return (
+                  <div key={e.id} className="px-4 py-2.5 flex items-start gap-3 text-sm">
+                    <Activity className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono text-xs text-primary">{e.event}</span>
+                        <span className="text-[10px] font-mono uppercase text-muted-foreground">{e.actor_kind}</span>
+                        {e.signature && (
+                          <span className="text-[10px] font-mono text-muted-foreground" title={`sig: ${e.signature}`}>
+                            sig:{e.signature.slice(0, 8)}…
+                          </span>
+                        )}
+                        {verdict && (
+                          verdict.ok
+                            ? <span className="text-[10px] font-mono text-primary">✓ valid</span>
+                            : <span className="text-[10px] font-mono text-destructive">✗ {verdict.reason}</span>
+                        )}
+                      </div>
+                      {Object.keys(e.payload ?? {}).length > 0 && (
+                        <pre className="text-[10px] font-mono text-muted-foreground mt-1 overflow-x-auto">{JSON.stringify(e.payload, null, 0)}</pre>
+                      )}
+                    </div>
+                    <div className="text-[10px] font-mono text-muted-foreground shrink-0">{formatDistanceToNow(new Date(e.created_at), { addSuffix: true })}</div>
+                  </div>
+                );
+              })}
             </div>
           </TabsContent>
 

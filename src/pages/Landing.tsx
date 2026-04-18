@@ -13,7 +13,7 @@ const Landing = () => {
               <Shield className="h-4 w-4 text-primary-foreground" />
             </div>
             <div>
-              <div className="font-semibold tracking-tight">AIGovOps</div>
+              <div className="font-semibold tracking-tight">AiGovOps</div>
               <div className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">Review Framework</div>
             </div>
           </div>
@@ -24,17 +24,18 @@ const Landing = () => {
 
         <section className="container max-w-6xl mx-auto pt-20 pb-24 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-card-grad text-xs font-mono text-muted-foreground mb-6">
-            <span className="pulse-dot" /> Agentic review pipeline · powered by Lovable AI
+            <span className="pulse-dot" /> Agentic review pipeline · signed audit chain
           </div>
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight leading-[1.05] max-w-4xl mx-auto">
-            End-to-end review for{" "}
-            <span className="text-emerald-grad">policy-as-code</span>,
-            <br /> auditable by default.
+            Deploy{" "}
+            <span className="text-emerald-grad">Policy-as-Code</span>{" "}
+            with an end-to-end agent review.
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Submit your AIGovOps Foundation policy bundle. A crew of specialist agents lints,
-            risk-scores, maps to EU AI Act / NIST AI RMF / ISO 42001, and stress-tests it against
-            your highest-liability scenarios — with a signed audit trail proving every step.
+            The AiGovOps Review Framework runs your AIGovOps Foundation policy bundle through a
+            crew of specialist agents — lint, risk-score, map to EU AI Act / NIST AI RMF / ISO 42001,
+            and stress-test against your highest-liability scenarios. Every step is HMAC-signed
+            into a tamper-evident audit chain.
           </p>
           <div className="mt-8 flex items-center justify-center gap-3">
             <Link to="/auth">
@@ -74,7 +75,7 @@ const Landing = () => {
         </section>
 
         <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground font-mono">
-          built for the AIGovOps Foundation policy-as-code service
+          AiGovOps Review Framework · for the AIGovOps Foundation policy-as-code service
         </footer>
       </div>
     </div>
