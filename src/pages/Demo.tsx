@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Pause, Play, RotateCcw, ArrowRight, Crown, Stamp, ChevronLeft, ArrowLeft, ArrowRight as ArrowRightIcon, MousePointerClick,
+  Pause, Play, RotateCcw, ArrowRight, Crown, Stamp, ChevronLeft, ArrowLeft, ArrowRight as ArrowRightIcon, MousePointerClick, Sparkles, Zap,
 } from "lucide-react";
 import { DEMOS, demoBySlug, type DemoBeat } from "@/data/demo-scenarios";
 import { portraitFor, personaBySlug } from "@/data/agent-personas";
