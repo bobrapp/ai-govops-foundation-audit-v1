@@ -157,18 +157,18 @@ export const PortraitStage = ({
             setGlError(true);
           }
         }}
-        gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
+        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
         fallback={<div className="text-xs text-muted-foreground p-4">3D unavailable</div>}
       >
         <Suspense fallback={null}>
-          <ambientLight intensity={0.55} />
+          <ambientLight intensity={0.6} />
           <directionalLight
             position={[2.5, 3, 4]}
-            intensity={1.2}
+            intensity={1.25}
             castShadow
-            color={isChief ? "#fff3cf" : "#dce6ff"}
+            color={isChief ? "#fff3cf" : "#c9d8ff"}
           />
-          <directionalLight position={[-3, -1, 2]} intensity={0.4} color="#5a7fb8" />
+          <directionalLight position={[-3, -1, 2]} intensity={0.5} color="#7aa2f7" />
           <Environment preset="city" />
           <PortraitBust src={src} isChief={isChief} />
           <CameraDolly trigger={speakerSlug} />
