@@ -185,12 +185,52 @@ const ReviewDetail = () => {
                 <div className="text-xs text-muted-foreground font-mono mt-1">Linter → Risk → Compliance → Scenarios</div>
               </div>
             )}
+
+            {/* Agent tab strip — jump to a specific agent's findings */}
+            {findings.length > 0 && (
+              <div className="sticky top-0 z-10 -mx-2 px-2 py-2 bg-background/80 backdrop-blur-sm border-b border-border/60">
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+                  <button
+                    type="button"
+                    onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                    className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-border bg-card-grad px-3 py-1.5 text-xs font-mono uppercase tracking-wider text-muted-foreground hover:border-primary/50 hover:text-foreground transition"
+                  >
+                    All <span className="tabular-nums">{findings.length}</span>
+                  </button>
+                  {Object.entries(byAgent).map(([agent, fs]) => {
+                    const slug = agentNameToSlug(agent);
+                    const persona = personaBySlug(slug);
+                    const anchor = `agent-${slug}`;
+                    return (
+                      <button
+                        key={agent}
+                        type="button"
+                        onClick={() => {
+                          const el = document.getElementById(anchor);
+                          if (el) {
+                            const y = el.getBoundingClientRect().top + window.scrollY - 80;
+                            window.scrollTo({ top: y, behavior: "smooth" });
+                          }
+                        }}
+                        className="shrink-0 inline-flex items-center gap-2 rounded-full border border-border bg-card-grad pl-1 pr-3 py-1 text-xs hover:border-primary/50 hover:bg-primary/5 transition group"
+                        title={persona ? `${persona.display_name} · ${persona.role_title}` : agent}
+                      >
+                        <PersonaAvatar slug={slug} size="xs" />
+                        <span className="font-medium text-foreground/90 group-hover:text-foreground">{agent}</span>
+                        <span className="font-mono tabular-nums text-muted-foreground">{fs.length}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {Object.entries(byAgent).map(([agent, fs]) => {
               const Icon = agentIcons[agent] ?? FileText;
               const slug = agentNameToSlug(agent);
               const persona = personaBySlug(slug);
               return (
-                <div key={agent} className="rounded-lg border border-border bg-card-grad overflow-hidden">
+                <div key={agent} id={`agent-${slug}`} className="rounded-lg border border-border bg-card-grad overflow-hidden scroll-mt-24">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                     <div className="flex items-center gap-3">
                       <PersonaAvatar slug={slug} size="sm" />
