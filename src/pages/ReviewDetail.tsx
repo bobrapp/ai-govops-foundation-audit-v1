@@ -113,6 +113,31 @@ const ReviewDetail = () => {
     return () => observer.disconnect();
   }, [findings]);
 
+  // Scroll to ?agent= from hash once that group renders
+  useEffect(() => {
+    if (!pendingAgentScroll || findings.length === 0) return;
+    const el = document.getElementById(`agent-${pendingAgentScroll}`);
+    if (el) {
+      const y = el.getBoundingClientRect().top + window.scrollY - 80;
+      window.scrollTo({ top: y, behavior: "smooth" });
+      setPendingAgentScroll(null);
+    }
+  }, [findings, pendingAgentScroll]);
+
+  // Persist filter + active agent in URL hash for shareable deep links
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (hiddenSeverities.size > 0) {
+      params.set("hide", Array.from(hiddenSeverities).join(","));
+    }
+    if (activeSlug) params.set("agent", activeSlug);
+    const newHash = params.toString();
+    const target = newHash ? `#${newHash}` : "";
+    if (window.location.hash !== target) {
+      window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}${target}`);
+    }
+  }, [hiddenSeverities, activeSlug]);
+
   const rerun = async () => {
     setBusy(true);
     await supabase.from("reviews").update({ status: "analyzing", overall_score: null, decided_at: null, decided_by: null, decision_notes: null }).eq("id", id);
