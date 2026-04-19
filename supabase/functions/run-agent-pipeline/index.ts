@@ -214,6 +214,22 @@ Deno.serve(async (req) => {
       });
     }
 
+    // AUTHORIZATION: re-fetch via RLS-scoped client to confirm the caller
+    // actually owns this review (or is a reviewer/admin). Without this,
+    // any authenticated user could trigger pipeline runs on any review.
+    const { data: ownedReview, error: ownErr } = await userClient
+      .from("reviews")
+      .select("id")
+      .eq("id", reviewId)
+      .maybeSingle();
+    if (ownErr || !ownedReview) {
+      return new Response(
+        JSON.stringify({ error: "forbidden: not your review" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // Now load full row via service-role for downstream work.
     const { data: review, error: rErr } = await admin
       .from("reviews")
       .select("*")
