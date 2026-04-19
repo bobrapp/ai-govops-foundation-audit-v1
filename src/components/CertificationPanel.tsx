@@ -97,7 +97,7 @@ export const CertificationPanel = ({ reviewId }: { reviewId: string }) => {
         />
         <Button onClick={issue} disabled={busy} size="sm">
           {busy ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1.5" />}
-          {certs.length ? "Re-issue certification" : "Issue certification"}
+          {certs.length ? "Re-issue attestation" : "Issue attestation"}
         </Button>
       </div>
 
@@ -149,7 +149,8 @@ export const CertificationPanel = ({ reviewId }: { reviewId: string }) => {
 
       {!certs.length && (
         <div className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-          No certification issued yet. Quick Audit pipeline will auto-issue one on a non-fail verdict, or click <strong>Issue certification</strong> above.
+          No Review Attestation issued yet. The Quick Audit pipeline auto-issues one on a non-fail
+          verdict, or click <strong>Issue attestation</strong> above.
         </div>
       )}
     </div>

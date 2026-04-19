@@ -72,6 +72,7 @@ const Verify = () => {
         <PageHeader
           eyebrow={`review: ${reviewId}`}
           title="Audit Chain Verification"
+          description="Independently verify a Review Attestation against the AiGovOps Open Standard. SLSA-style: re-fetches the PDF, recomputes the HMAC chain, and refuses to validate if anything has been touched. No cooperation from the insured required."
         />
 
         {error && (
@@ -100,11 +101,11 @@ const Verify = () => {
               </div>
             </div>
 
-            {/* ---------- Compliance certifications (Ken + Bob co-signed) ---------- */}
+            {/* ---------- Review Attestations (Ken + Bob co-signed) ---------- */}
             {data.certifications?.length > 0 && (
               <section className="space-y-3">
                 <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                  <Sparkles className="h-3.5 w-3.5" /> Compliance certifications · Ken &amp; Bob
+                  <Sparkles className="h-3.5 w-3.5" /> Review Attestations · co-signed by Ken &amp; Bob
                 </h2>
                 {data.certifications.map((c: CertOut) => (
                   <div key={c.id} className="rounded-lg border border-border bg-card-grad p-5 space-y-4">
