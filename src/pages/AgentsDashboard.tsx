@@ -1,4 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
@@ -56,6 +58,26 @@ const AgentsDashboard = () => {
   const decisionsQ = useDecisions(80);
   const hitlQ = useHitlQueue();
   const resolveHitl = useResolveHitl();
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("agents-dashboard-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "agent_decisions" },
+        () => qc.invalidateQueries({ queryKey: ["agent_decisions"] })
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "hitl_reviews" },
+        () => qc.invalidateQueries({ queryKey: ["hitl_reviews"] })
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc]);
 
   const [openItem, setOpenItem] = useState<HitlRow | null>(null);
   const [note, setNote] = useState("");
