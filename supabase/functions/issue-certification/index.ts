@@ -155,15 +155,24 @@ Deno.serve(async (req) => {
     doc.setTextColor(0); y += 56;
 
     // Meta block
+    const tierLabel = (t: string | null) => t ? t.toUpperCase() : "—";
+    const tierAgree = riskTierDeclared && riskTierDeclared === riskTierDerived;
+    const tierLine = riskTierDeclared
+      ? `Declared ${tierLabel(riskTierDeclared)} · Derived ${tierLabel(riskTierDerived)}` +
+        (tierAgree ? "  (agree)" : "  ⚠ DISAGREEMENT — underwriting signal")
+      : `Derived ${tierLabel(riskTierDerived)}  (no submitter declaration)`;
+
     const rows: Array<[string,string]> = [
       ["Organization", organization],
       ["Scope", scopeStatement],
       ["AOS Version", aosVersion],
+      ["Risk Tier", tierLine],
       ["Scenarios", (review.scenarios ?? []).join(", ") || "general"],
       ["Findings", `${conf.total_findings ?? 0} total · ${conf.critical ?? 0} critical · ${conf.high ?? 0} high · ${conf.medium ?? 0} medium`],
       ["Compensating controls", String(conf.compensations ?? 0)],
       ["Review ID", reviewId],
-      ["Issued", new Date().toUTCString()],
+      ["Issued", issuedAt.toUTCString()],
+      ["Expires", `${expiresAt.toUTCString()}  (12-month cycle)`],
       ["Trigger", trigger === "auto" ? "Automatic on Quick Audit completion" : "Manual re-issue"],
     ];
     doc.setFontSize(10);
