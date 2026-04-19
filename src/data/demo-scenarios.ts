@@ -47,6 +47,142 @@ export interface DemoScenario {
 }
 
 export const DEMOS: DemoScenario[] = [
+  // ---------- 0. HEALTHCARE — INSURANCE PRIOR-AUTH (90s end-to-end customer walkthrough) ----------
+  {
+    id: "healthcare_insurance",
+    label: "Health insurance AI",
+    tagline: "A payer ships an AI that auto-denies prior-authorization requests.",
+    accent: "destructive",
+    beats: [
+      // ----- Opening scene -----
+      {
+        kind: "intro",
+        dwell: 4500,
+        title: "Meet Maya, Head of Compliance at NorthStar Health Plan.",
+        body: "Her team built an AI that auto-denies prior-authorization requests. Legal wants a defensible audit before it touches a single patient.",
+      },
+
+      // ===== STEP 1 — PICK YOUR PROBLEM =====
+      {
+        kind: "intro",
+        dwell: 5500,
+        step: 1,
+        stepLabel: "Pick your problem",
+        title: "Patient harm from an insurance AI.",
+        youDo: "Click the healthcare card on the home page.",
+        body: "One click pre-loads the HIPAA + state-DOI scenario pack so the right specialists are already on the bench.",
+      },
+
+      // ===== STEP 2 — TALK TO KEN OR BOB =====
+      {
+        kind: "agent",
+        dwell: 6500,
+        personaSlug: "ken-newton",
+        step: 2,
+        stepLabel: "Talk to a Chief Auditor",
+        title: "Ken Newton qualifies the scope.",
+        youDo: "Tell Ken (or Bob) what your AI does, in plain English.",
+        body: "“We auto-deny prior-auth claims with a model trained on five years of historical decisions.” Ken drafts a Review with risk_tier = critical.",
+      },
+      {
+        kind: "code",
+        dwell: 6500,
+        title: "prior_auth_model.yaml — what Maya pasted",
+        code: `model: claims-deny-v3
+training_data: 2019_2024_decisions.parquet   # ⚠ historical bias
+auto_deny_threshold: 0.62                      # ⚠ no human review
+appeal_path: null                              # ⚠ no recourse
+explanation: "policy mismatch"                 # ⚠ not specific
+audit_log: false                               # ⚠ no trail`,
+      },
+
+      // ===== STEP 3 — MEET THE COUNCIL =====
+      {
+        kind: "intro",
+        dwell: 4000,
+        step: 3,
+        stepLabel: "Meet the council",
+        title: "Ten specialists review in parallel.",
+        youDo: "Sit back. Watch the handoffs in real time.",
+      },
+      {
+        kind: "agent",
+        dwell: 6000,
+        personaSlug: "nightingale",
+        title: "Disparate-impact red flag.",
+        body: "Denial rate for Medicaid cohort = 47% vs commercial baseline 18%. Below 4/5ths rule. Mirrors the Cigna PXDX class action and UnitedHealthcare nH Predict suit.",
+        severity: "critical",
+        controlId: "AOS-L1-11",
+      },
+      {
+        kind: "handoff",
+        dwell: 2400,
+        personaSlug: "nightingale",
+        handoffSlug: "pacioli",
+        title: "Hand to Luca Pacioli",
+        body: "Map to HIPAA + state DOI rules.",
+      },
+      {
+        kind: "agent",
+        dwell: 6500,
+        personaSlug: "pacioli",
+        title: "Three regulations cite this.",
+        body: "CMS 0057-F (real-time prior-auth), HIPAA §164.312 (audit controls), CA SB 1120 / NY S5688 (human-in-the-loop required for medical-necessity denials).",
+        severity: "high",
+        controlId: "AOS-L1-08",
+      },
+      {
+        kind: "handoff",
+        dwell: 2400,
+        personaSlug: "pacioli",
+        handoffSlug: "arendt",
+        title: "Hand to Hannah Arendt",
+        body: "Who is accountable when a claim is denied?",
+      },
+      {
+        kind: "agent",
+        dwell: 5500,
+        personaSlug: "arendt",
+        title: "Accountability gap.",
+        body: "No named medical director signs the denial. “The model decided” is not a defensible posture under state insurance law.",
+        severity: "high",
+        controlId: "AOS-L1-09",
+      },
+
+      // ===== STEP 4 — SHIP-READINESS VERDICT =====
+      {
+        kind: "stamp",
+        dwell: 7000,
+        personaSlug: "ken-newton",
+        step: 4,
+        stepLabel: "Get a measurable verdict",
+        title: "RED · Do not ship · 34% ready",
+        youDo: "Read the traffic-light verdict and the fix list.",
+        body: "Findings: 2 critical, 2 high, 1 medium. Required fixes: add human-in-the-loop above 0.5 confidence, publish appeal path, log every decision with reason codes, run quarterly disparate-impact tests.",
+        severity: "critical",
+      },
+
+      // ===== STEP 5 — HUMAN ATTESTATION + PARTNER REFERRAL =====
+      {
+        kind: "agent",
+        dwell: 6500,
+        personaSlug: "bob-smith",
+        step: 5,
+        stepLabel: "Human attestation + partner audit",
+        title: "Bob Smith co-signs the determination.",
+        youDo: "A chartered human reviewer signs the AOC. We refer you to a QAGAC firm for the deep audit.",
+        body: "The HMAC chain seals. Anyone — your regulator, your reinsurer, a journalist — can verify the certificate without our cooperation. NorthStar gets matched to two QAGAC firms in their state.",
+        severity: "info",
+      },
+      {
+        kind: "intro",
+        dwell: 5500,
+        title: "90 seconds. Five steps. One certificate anyone can verify.",
+        body: "Maya now has a defensible record before a single denial reaches a patient. That is what shipping responsibly looks like.",
+      },
+    ],
+  },
+
   // ---------- 1. ENTERPRISE OSS ----------
   {
     id: "enterprise_oss",
