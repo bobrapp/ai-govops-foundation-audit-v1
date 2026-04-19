@@ -1,0 +1,28 @@
+name: package CI
+
+on:
+  push:
+    paths:
+      - "packages/verify/**"
+  pull_request:
+    paths:
+      - "packages/verify/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/verify
+    strategy:
+      matrix:
+        node: ["18", "20", "22"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm install
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
