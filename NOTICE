@@ -1,0 +1,22 @@
+AiGovOps Review Framework
+Copyright (c) 2026 AiGovOps Foundation
+
+This product includes software developed by the AiGovOps Foundation
+(https://www.aigovopsfoundation.org/).
+
+This product bundles or depends on the following third-party components:
+
+- React (MIT) — https://react.dev
+- Vite (MIT) — https://vitejs.dev
+- Tailwind CSS (MIT) — https://tailwindcss.com
+- shadcn/ui (MIT) — https://ui.shadcn.com
+- lucide-react (ISC) — https://lucide.dev
+- Supabase JS SDK (MIT) — https://supabase.com
+- TanStack Query (MIT) — https://tanstack.com/query
+
+The AiGovOps Operational Standard (AOS) machine-readable spec
+(public/specs/aos-v1.0.yaml) is licensed CC-BY-4.0 — please credit
+"AiGovOps Foundation" when redistributing or adapting.
+
+The names "AiGovOps", "AOS", "QAGA", and "QAGAC" are trademarks
+of the AiGovOps Foundation. See GOVERNANCE.md for usage policy.

@@ -1,0 +1,181 @@
+# AiGovOps Operational Standard — machine-readable export
+# This file is the canonical, diffable representation of the AOS at the version below.
+# Generated from the live aos_controls table and committed to the repo so that
+# external reviewers can diff changes in PRs.
+# Stewarded by the AiGovOps Foundation. Licensed CC-BY-4.0.
+
+spec: "AiGovOps Operational Standard (AOS)"
+version: "0.1-draft"
+status: "active"
+exported_at: "2026-04-19"
+steward: "AiGovOps Foundation"
+license: "CC-BY-4.0"
+summary: "The AOS is a versioned, machine-readable set of operational controls that an AI deployment must satisfy to earn an AiGovOps Attestation of Conformance (AOC). Controls are grouped by domain and mapped to external frameworks (EU AI Act, NIST AI RMF, ISO 42001, SOC 2, HIPAA, GDPR)."
+control_count: 18
+domains:
+  - "data"
+  - "decisioning"
+  - "evidence"
+  - "model"
+  - "ops"
+  - "pipeline"
+  - "safety"
+controls:
+  - control_id: "AOS-L1-13"
+    domain: "data"
+    level: 1
+    objective: "Training and inference data lineage is recorded and queryable."
+    evidence_expected: "Lineage graph, dataset checksums."
+    framework_refs:
+      - "EU AI Act Art. 10"
+      - "ISO 42001 8.3"
+    testing_procedure: "Pick 3 model versions; produce upstream data sources."
+  - control_id: "AOS-L1-14"
+    domain: "data"
+    level: 1
+    objective: "Personally identifiable / regulated data is classified and minimized."
+    evidence_expected: "Classification report, minimization config."
+    framework_refs:
+      - "GDPR Art. 5(1)(c)"
+      - "HIPAA §164.502(b)"
+    testing_procedure: "Inspect data classification labels and minimization transforms."
+  - control_id: "AOS-L1-08"
+    domain: "decisioning"
+    level: 1
+    objective: "Every consequential AI decision logs inputs, outputs, model id, and policy version."
+    evidence_expected: "Decision logs with model id + policy version."
+    framework_refs:
+      - "EU AI Act Art. 13"
+      - "NIST AI RMF MEASURE-2.7"
+    testing_procedure: "Trace 5 production decisions through the log; confirm all four fields present."
+  - control_id: "AOS-L1-09"
+    domain: "decisioning"
+    level: 1
+    objective: "A human override path exists and is exercised at least quarterly."
+    evidence_expected: "Override UI screenshot, drill log, ticket."
+    framework_refs:
+      - "EU AI Act Art. 14"
+      - "NIST AI RMF MANAGE-1.3"
+    testing_procedure: "Inspect override interface + quarterly drill records."
+  - control_id: "AOS-L1-10"
+    domain: "decisioning"
+    level: 1
+    objective: "Human reviewers are authenticated and roles are separated from developers."
+    evidence_expected: "RBAC export, deployment ACLs."
+    framework_refs:
+      - "SOC 2 CC6.3"
+      - "ISO 27001 A.5.3"
+    testing_procedure: "Confirm RBAC config; reviewer cannot deploy code."
+  - control_id: "AOS-L1-05"
+    domain: "evidence"
+    level: 1
+    objective: "Every agent run produces an evidence artifact stored append-only."
+    evidence_expected: "Audit log entries with payload + content hash."
+    framework_refs:
+      - "ISO 42001 9.1"
+      - "NIST AI RMF MEASURE-4.2"
+    testing_procedure: "Sample 10 runs from the audit log and confirm evidence rows exist with content hash."
+  - control_id: "AOS-L1-06"
+    domain: "evidence"
+    level: 1
+    objective: "Audit entries are cryptographically chained (HMAC) and tamper-evident."
+    evidence_expected: "Verifier output, HMAC algorithm doc, key custody statement."
+    framework_refs:
+      - "NIST AI RMF GOVERN-4.1"
+      - "ISO 27001 A.12.4"
+    testing_procedure: "Run chain verifier on the full review history; expect zero invalid entries."
+  - control_id: "AOS-L1-07"
+    domain: "evidence"
+    level: 1
+    objective: "Evidence retention period is documented and enforced."
+    evidence_expected: "Retention policy doc, db query showing oldest entry."
+    framework_refs:
+      - "EU AI Act Art. 12"
+      - "HIPAA §164.316(b)(2)"
+    testing_procedure: "Inspect retention policy; query age of oldest record."
+  - control_id: "AOS-L1-15"
+    domain: "model"
+    level: 1
+    objective: "Each released model has a machine-readable model card captured at build time."
+    evidence_expected: "Model card JSON in evidence store."
+    framework_refs:
+      - "NIST AI RMF MAP-3"
+      - "ISO 42001 8.4"
+    testing_procedure: "Pull model cards for last 3 releases."
+  - control_id: "AOS-L1-16"
+    domain: "model"
+    level: 1
+    objective: "Generated content for IP claims has provenance metadata (C2PA or equivalent)."
+    evidence_expected: "C2PA manifests, signature chain."
+    framework_refs:
+      - "DMCA"
+      - "EU AI Act Art. 50"
+    testing_procedure: "Sample 5 generated artifacts; verify embedded provenance."
+  - control_id: "AOS-L1-17"
+    domain: "ops"
+    level: 1
+    objective: "Open-source AI dependencies have SBOM + license + provenance attestations."
+    evidence_expected: "SBOM (CycloneDX), SLSA L2+ attestations."
+    framework_refs:
+      - "NIST SSDF PO.5"
+      - "EO 14028"
+    testing_procedure: "Inspect SBOM and SLSA attestations for top 10 deps."
+  - control_id: "AOS-L1-18"
+    domain: "ops"
+    level: 1
+    objective: "Incident response procedure is documented, drilled, and links to evidence chain."
+    evidence_expected: "IR runbook, drill report, post-mortem."
+    framework_refs:
+      - "NIST AI RMF MANAGE-4"
+      - "ISO 42001 10.1"
+    testing_procedure: "Inspect IR runbook and last drill report."
+  - control_id: "AOS-L1-01"
+    domain: "pipeline"
+    level: 1
+    objective: "Every AI deployment is governed by versioned policy-as-code."
+    evidence_expected: "Repo URL, commit SHA, signed tag, policy file checksums."
+    framework_refs:
+      - "NIST AI RMF GOVERN-1.4"
+      - "ISO 42001 6.2"
+    testing_procedure: "Confirm policy bundle is committed to a tracked repo with semver and signed tags."
+  - control_id: "AOS-L1-02"
+    domain: "pipeline"
+    level: 1
+    objective: "Policy bundle has package, version, owner, and description metadata."
+    evidence_expected: "Lint report showing all required fields present."
+    framework_refs:
+      - "ISO 42001 7.5"
+    testing_procedure: "Lint the bundle for required metadata fields."
+  - control_id: "AOS-L1-03"
+    domain: "pipeline"
+    level: 1
+    objective: "No policy contains an unsafe default-allow rule."
+    evidence_expected: "Scanner output with zero unsafe defaults."
+    framework_refs:
+      - "NIST AI RMF MANAGE-2.1"
+    testing_procedure: "Static-scan all rules for `default allow = true` or equivalent."
+  - control_id: "AOS-L1-04"
+    domain: "pipeline"
+    level: 1
+    objective: "All controls run automatically in CI on every change."
+    evidence_expected: "CI run logs, gate config, synthetic-failure run."
+    framework_refs:
+      - "NIST AI RMF MEASURE-3"
+      - "SOC 2 CC8.1"
+    testing_procedure: "Inspect CI configuration for AOS gate; trigger a synthetic violation and confirm CI fails."
+  - control_id: "AOS-L1-11"
+    domain: "safety"
+    level: 1
+    objective: "Red-team / adversarial tests run in CI and block release on regression."
+    evidence_expected: "Red-team test suite, CI logs, regression policy."
+    framework_refs:
+      - "NIST AI RMF MEASURE-2.6"
+    testing_procedure: "Inspect red-team CI step + last 10 runs."
+  - control_id: "AOS-L1-12"
+    domain: "safety"
+    level: 1
+    objective: "High-risk scenarios (healthcare, IP, HR) have scenario-specific control packs."
+    evidence_expected: "Scenario rule pack manifest + enforcement test."
+    framework_refs:
+      - "EU AI Act Annex III"
+    testing_procedure: "Confirm scenario tag → control pack mapping is enforced at submission."

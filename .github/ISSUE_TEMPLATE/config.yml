@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security disclosure (private)
+    url: mailto:security@aigovopsfoundation.org
+    about: Report security vulnerabilities privately. Do not file public issues.
+  - name: AiGovOps Foundation
+    url: https://www.aigovopsfoundation.org/
+    about: Learn about the foundation that stewards this project.

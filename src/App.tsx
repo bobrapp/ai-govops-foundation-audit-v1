@@ -17,6 +17,9 @@ import Registry from "./pages/Registry";
 import MyAssessor from "./pages/MyAssessor";
 import Firms from "./pages/Firms";
 import Verify from "./pages/Verify";
+import Docs from "./pages/Docs";
+import DocViewer from "./pages/DocViewer";
+import AosSpec from "./pages/AosSpec";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +36,9 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/registry" element={<Registry />} />
             <Route path="/verify/:reviewId" element={<Verify />} />
+            <Route path="/docs" element={<Docs />} />
+            <Route path="/docs/aos-spec" element={<AosSpec />} />
+            <Route path="/docs/:slug" element={<DocViewer />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/submit" element={<ProtectedRoute><Submit /></ProtectedRoute>} />
             <Route path="/review/:id" element={<ProtectedRoute><ReviewDetail /></ProtectedRoute>} />

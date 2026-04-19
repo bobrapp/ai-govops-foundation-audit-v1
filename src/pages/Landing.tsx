@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Shield, GitBranch, ScanLine, Scale, FileLock, Brain, Stamp, ArrowRight, Activity } from "lucide-react";
+import { Shield, GitBranch, ScanLine, Scale, FileLock, Brain, Stamp, ArrowRight, Activity, BookOpen } from "lucide-react";
+import { DocsSection } from "@/components/DocsSection";
 
 const Landing = () => {
   return (
@@ -37,17 +38,30 @@ const Landing = () => {
             and stress-test against your highest-liability scenarios. Every step is HMAC-signed
             into a tamper-evident audit chain.
           </p>
-          <div className="mt-8 flex items-center justify-center gap-3">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link to="/auth">
               <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow">
                 Start a review <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            </Link>
+            <Link to="/docs/prd">
+              <Button size="lg" variant="secondary">
+                <BookOpen className="h-4 w-4 mr-1" /> Read the PRD
               </Button>
             </Link>
             <a href="https://www.aigovopsfoundation.org/" target="_blank" rel="noreferrer">
               <Button size="lg" variant="outline">About AIGovOps Foundation</Button>
             </a>
           </div>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+            <span className="border border-border rounded px-2 py-0.5">Apache-2.0</span>
+            <span className="border border-border rounded px-2 py-0.5">AOS v0.1</span>
+            <span className="border border-border rounded px-2 py-0.5">Audit Chain Verified</span>
+            <span className="border border-border rounded px-2 py-0.5">AiGovOps Foundation</span>
+          </div>
         </section>
+
+        <DocsSection />
 
         <section className="container max-w-6xl mx-auto pb-20">
           <div className="grid md:grid-cols-3 gap-4">
