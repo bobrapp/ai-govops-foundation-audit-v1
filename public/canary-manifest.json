@@ -1,0 +1,130 @@
+{
+  "$schema": "https://aigovops.foundation/schema/canary-manifest-v1.json",
+  "version": 1,
+  "generated_at": "2026-04-19T00:28:30Z",
+  "description": "Tamper-evident SHA-256 manifest for AiGovOps governance-critical files. CI verifies these hashes weekly; any drift opens a GitHub issue.",
+  "covers": [
+    "supabase/functions/** (edge functions: audit chain, attestation, agent pipeline)",
+    "supabase/migrations/** (database schema + RLS policies)",
+    "public/specs/** (machine-readable AOS spec)",
+    "src/pages/AosSpec.tsx, AuditLog.tsx, Verify.tsx (user-facing trust surfaces)",
+    "src/lib/docs-manifest.ts (canonical doc index shown to the public)"
+  ],
+  "files": [
+    {
+      "path": "public/specs/aos-v1.0.yaml",
+      "sha256": "a7215a488e1da2990c3be97605e207606407724aaf403b9022dd5caabf4cb4de",
+      "bytes": 7646
+    },
+    {
+      "path": "src/lib/docs-manifest.ts",
+      "sha256": "c7d6383c9226b4daa4e66dfdfc12fe39ac42ce48231ebb42d1b96a7a344664c0",
+      "bytes": 2962
+    },
+    {
+      "path": "src/pages/AosSpec.tsx",
+      "sha256": "f5f92a7cb01e343a5e41898b6221c421b07e71c6219f106ca9f9d684bdb28df5",
+      "bytes": 9175
+    },
+    {
+      "path": "src/pages/AuditLog.tsx",
+      "sha256": "3a5d8a6c0531b6fc51fc4d9745ac5a608b3224f0ea83352fe78ed7c1bde30ccd",
+      "bytes": 2151
+    },
+    {
+      "path": "src/pages/Verify.tsx",
+      "sha256": "6de1a55be8c440edd9f076c1a414eeaa1452fe8f8f9a9106257fcf7c29e2455c",
+      "bytes": 5914
+    },
+    {
+      "path": "supabase/functions/_shared/audit.ts",
+      "sha256": "ef2859c0684c8f4d83e8d7ea19bc83c8721481dc4266ccbcadbf78e0a930829e",
+      "bytes": 4672
+    },
+    {
+      "path": "supabase/functions/audit-verify/index.ts",
+      "sha256": "bac1ce42cc9b6d37c8c3792d46e3fc1725ae1b5ae961144129c80f001125e7f4",
+      "bytes": 1924
+    },
+    {
+      "path": "supabase/functions/backfill-attestation-pdfs/index.ts",
+      "sha256": "1a08d687c51a970e9d3265c0c702fe2dd7352e4e15262f39e40ffacb7cb239b4",
+      "bytes": 7071
+    },
+    {
+      "path": "supabase/functions/github-fetch/index.ts",
+      "sha256": "59bdbf373f30c8b7142a2feb7fb11fb6abab797e8e74c78894cb4e88ec057726",
+      "bytes": 3101
+    },
+    {
+      "path": "supabase/functions/issue-attestation/index.ts",
+      "sha256": "0af7331f24182e2d6ed467838ab4cfa9827659628f531ef11d0ff59f70917381",
+      "bytes": 6895
+    },
+    {
+      "path": "supabase/functions/run-agent-pipeline/index.ts",
+      "sha256": "966ee185abb3f67c46b9734e0c7cf85aba629b9461267b9fda35f9d0515dc403",
+      "bytes": 14574
+    },
+    {
+      "path": "supabase/functions/seed-demo/index.ts",
+      "sha256": "c775f1a4b2b24c0a2419a94b2be61ee089b133a1493a32a000eeea9974b3e82e",
+      "bytes": 12570
+    },
+    {
+      "path": "supabase/functions/sign-decision/index.ts",
+      "sha256": "4c9f7d8488bbb7899ca7e25ece9d332584100d9de9787e6093ab6530bbde8c3b",
+      "bytes": 4101
+    },
+    {
+      "path": "supabase/functions/unseed-demo/index.ts",
+      "sha256": "f2b05edaf14638fc4763fde0264a9b884c7de737f3667b44a3ac3c312a30783e",
+      "bytes": 6108
+    },
+    {
+      "path": "supabase/functions/verify-chain/index.ts",
+      "sha256": "8cf049eec0ac1879779f2c0b3abffd6eea99fe06d4b3e5e1e24a06635119982e",
+      "bytes": 3885
+    },
+    {
+      "path": "supabase/migrations/20260418222223_ab19b36d-ed96-4f0a-89d5-8d561d0c230d.sql",
+      "sha256": "fb8052e076597f6e22743d49c0b6212a73eeed8d213cee29a765f0f83420d221",
+      "bytes": 7536
+    },
+    {
+      "path": "supabase/migrations/20260418222240_ea4cf7f9-24fc-4554-ba6c-e3c8a4f4975a.sql",
+      "sha256": "65d895edb4dad2a733ea2fe12c0c5de1f06034db085453536a3f01ab1eb14607",
+      "bytes": 185
+    },
+    {
+      "path": "supabase/migrations/20260418223530_cd41cf37-c15a-47bf-a5de-e452768294ad.sql",
+      "sha256": "32e41478ef1d90cb1a8ca1d6494b5dc18b47e236473481b0b14013e6909c6885",
+      "bytes": 1997
+    },
+    {
+      "path": "supabase/migrations/20260418224615_86ed300e-6488-4a17-b0d4-2cfcdd2ef7a5.sql",
+      "sha256": "9114ba4eb2bf3c5a4fe189eb852b7b7fe97df1d1ca94399f84ec125d7f6536fa",
+      "bytes": 16860
+    },
+    {
+      "path": "supabase/migrations/20260418225733_74df011c-2ddb-405e-a38e-1139f28f9805.sql",
+      "sha256": "12560b4ddd20aa130adaa3a8b0eadc2cefa5a6630009a641c45ed9c3c01a9d4d",
+      "bytes": 12888
+    },
+    {
+      "path": "supabase/migrations/20260418225749_3cebc714-5984-4654-a4bb-633edd4be145.sql",
+      "sha256": "43cb3cddd9a04371b2f5ba6f1b4acb8e290f2e5442011fd2dad48fa50d9ed86d",
+      "bytes": 277
+    },
+    {
+      "path": "supabase/migrations/20260418233538_2536beba-4cf1-4107-ab07-fbb0b0855632.sql",
+      "sha256": "e0815850fc57058bb1fe1d7c0ea3be3863170b23a50aa9cc2e26976090d7531b",
+      "bytes": 5031
+    },
+    {
+      "path": "supabase/migrations/20260419000706_2e93ff2c-fc74-4f58-94e1-7ed170b68c7b.sql",
+      "sha256": "be788d5e1546a1d7b35a30584731058f4a161959b12cc9d200789612f23a0426",
+      "bytes": 4284
+    }
+  ]
+}
