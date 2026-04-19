@@ -1,7 +1,7 @@
 {
   "$schema": "https://aigovops.foundation/schema/canary-manifest-v1.json",
   "version": 1,
-  "generated_at": "2026-04-19T00:28:30Z",
+  "generated_at": "2026-04-19T00:30:35Z",
   "description": "Tamper-evident SHA-256 manifest for AiGovOps governance-critical files. CI verifies these hashes weekly; any drift opens a GitHub issue.",
   "covers": [
     "supabase/functions/** (edge functions: audit chain, attestation, agent pipeline)",
@@ -18,8 +18,8 @@
     },
     {
       "path": "src/lib/docs-manifest.ts",
-      "sha256": "c7d6383c9226b4daa4e66dfdfc12fe39ac42ce48231ebb42d1b96a7a344664c0",
-      "bytes": 2962
+      "sha256": "d2ce408ad557ec3feb63bc11d4344b87bda8e2ec10a21e6bb5abb58c623a487c",
+      "bytes": 3321
     },
     {
       "path": "src/pages/AosSpec.tsx",
