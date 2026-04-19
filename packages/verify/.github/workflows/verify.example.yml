@@ -1,0 +1,44 @@
+# Example: fail your release pipeline when the AOS attestation for your
+# project is missing, expired, or revoked. Drop this file into .github/workflows/
+# of any repo that ships software covered by an AOS Review Attestation.
+name: AOS attestation gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # Re-check daily so an expired/revoked attestation breaks the build
+    # even when no new commits land.
+    - cron: "17 6 * * *"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install verifier
+        run: npm install -g @aigovops/verify
+
+      - name: Verify AOS attestation for this project
+        env:
+          AOS_HOST: ${{ vars.AOS_HOST }}        # e.g. https://aigovops.example.com
+          AOS_REVIEW_ID: ${{ vars.AOS_REVIEW_ID }}
+        run: |
+          aigovops-verify review \
+            --host "$AOS_HOST" \
+            --review-id "$AOS_REVIEW_ID" \
+            | tee aos-verify.json
+          jq -e '.ok == true' aos-verify.json
+
+      - name: Upload verifier output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aos-verify-${{ github.sha }}
+          path: aos-verify.json
