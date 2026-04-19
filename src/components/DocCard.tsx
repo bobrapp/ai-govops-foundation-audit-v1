@@ -11,12 +11,12 @@ export function DocCard({ doc }: Props) {
   const isDownload = !!doc.file;
 
   const inner = (
-    <div className="group h-full rounded-xl border border-border bg-card-grad p-5 shadow-elev transition-all hover:border-primary/40 hover:shadow-glow">
+    <div className="group h-full rounded-2xl border border-border bg-card-grad p-5 shadow-elev transition-all hover:border-primary/40 hover:shadow-glow hover:-translate-y-0.5">
       <div className="flex items-start justify-between">
-        <div className="h-10 w-10 rounded-md border border-border bg-card grid place-items-center">
+        <div className="h-11 w-11 rounded-xl border border-primary/30 bg-primary/10 grid place-items-center">
           <Icon className="h-5 w-5 text-primary" />
         </div>
-        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground border border-border rounded px-1.5 py-0.5">
+        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground border border-border bg-glass rounded-md px-2 py-0.5">
           {doc.badge}
         </span>
       </div>
