@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "admin" | "reviewer" | "submitter";
+export type AppRole = "admin" | "reviewer" | "submitter" | "curator";
 
 export const useRoles = () => {
   const [roles, setRoles] = useState<AppRole[]>([]);
@@ -21,10 +21,10 @@ export const useRoles = () => {
     return () => { active = false; };
   }, []);
 
-  return {
-    roles,
-    loading,
-    isAdmin: roles.includes("admin"),
-    isReviewer: roles.includes("reviewer") || roles.includes("admin"),
-  };
+  const isAdmin = roles.includes("admin");
+  const isCurator = roles.includes("curator") || isAdmin;
+  const isReviewer = roles.includes("reviewer") || isAdmin;
+  const canChat = isAdmin || isCurator || isReviewer;
+
+  return { roles, loading, isAdmin, isCurator, isReviewer, canChat };
 };
