@@ -35,6 +35,7 @@ const AgentsDashboard = lazy(() => import("./pages/AgentsDashboard"));
 const AgentChat = lazy(() => import("./pages/AgentChat"));
 const QuickAudit = lazy(() => import("./pages/QuickAudit"));
 const Demo = lazy(() => import("./pages/Demo"));
+const Developers = lazy(() => import("./pages/Developers"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -71,6 +72,7 @@ const App = () => (
               <Route path="/docs/:slug" element={<DocViewer />} />
               <Route path="/demo" element={<Demo />} />
               <Route path="/demo/:scenario" element={<Demo />} />
+              <Route path="/developers" element={<Developers />} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/quick-audit" element={<ProtectedRoute><QuickAudit /></ProtectedRoute>} />
               <Route path="/submit" element={<ProtectedRoute><Submit /></ProtectedRoute>} />
