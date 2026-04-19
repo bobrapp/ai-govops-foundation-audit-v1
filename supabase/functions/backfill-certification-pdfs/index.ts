@@ -1,6 +1,6 @@
-// Admin-only: regenerate signed Aurora-style PDFs for existing QAGA attestation rows.
-// Mirrors the rendering logic of issue-attestation but operates over already-issued
-// rows in-place: same row id, new pdf_path + pdf_sha256, audit event "attestation.pdf_backfilled".
+// Admin-only: regenerate signed Aurora-style PDFs for existing certifications.
+// Mirrors issue-certification rendering but updates rows in-place — no new
+// certifications row inserted, no duplicate "certification.issued" audit event.
 // Body params:
 //   { force?: boolean }   force=true regenerates ALL rows; default only rows missing pdf_path.
 
@@ -17,7 +17,6 @@ const corsHeaders = {
 const enc = new TextEncoder();
 const toHex = (buf: ArrayBuffer) =>
   Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
-
 async function sha256Hex(bytes: Uint8Array): Promise<string> {
   return toHex(await crypto.subtle.digest("SHA-256", bytes));
 }
@@ -67,14 +66,13 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const force = body.force === true;
-    const query = admin.from("attestations").select("*");
+    const query = admin.from("certifications").select("*");
     const { data: rows, error: qErr } = force ? await query : await query.is("pdf_path", null);
     if (qErr) throw qErr;
 
     const origin = new URL(req.url).origin.replace(/\/functions\/v1$/, "");
     const portraitBase = `${SUPABASE_URL}/storage/v1/object/public/agent-portraits`;
-    const fetchPortraitDataUrl = async (slug: string | null): Promise<string | null> => {
-      if (!slug) return null;
+    const fetchPortraitDataUrl = async (slug: string): Promise<string | null> => {
       try {
         const res = await fetch(`${portraitBase}/${slug}.jpg`);
         if (!res.ok) return null;
@@ -88,46 +86,51 @@ Deno.serve(async (req) => {
       } catch { return null; }
     };
 
+    const { data: chiefs } = await admin.from("agent_personas")
+      .select("slug, display_name, role_title").in("slug", ["ken-newton", "bob-smith"]);
+    const ken = chiefs?.find((p) => p.slug === "ken-newton");
+    const bob = chiefs?.find((p) => p.slug === "bob-smith");
+    if (!ken || !bob) throw new Error("Chief auditors Ken and Bob must exist");
+    const [kenPortrait, bobPortrait] = await Promise.all([
+      fetchPortraitDataUrl("ken-newton"),
+      fetchPortraitDataUrl("bob-smith"),
+    ]);
+
     const generated: Array<{ id: string; review_id: string; pdf_path: string }> = [];
 
-    for (const att of rows ?? []) {
-      // Resolve QAGA + firm metadata for the signature block.
-      let assessorName = "QAGA Assessor";
-      let assessorRole = "Quality Assurance Gate Assessor";
-      let firmName = "QAGAC Firm";
-      let assessorPortraitSlug: string | null = null;
-      if (att.qaga_assessor_id) {
-        const { data: a } = await admin.from("qaga_assessors")
-          .select("display_name, qaga_credential_id, user_id").eq("id", att.qaga_assessor_id).maybeSingle();
-        assessorName = a?.display_name ?? assessorName;
-        if (a?.qaga_credential_id) assessorRole = `QAGA · ${a.qaga_credential_id}`;
-        assessorPortraitSlug = a?.user_id ?? null;
-      }
-      if (att.qaga_firm_id) {
-        const { data: f } = await admin.from("qagac_firms").select("name").eq("id", att.qaga_firm_id).maybeSingle();
-        firmName = f?.name ?? firmName;
-      }
+    for (const cert of rows ?? []) {
+      const reviewId = cert.review_id as string;
+
+      // Recompute conformance / risk tiers from CURRENT data so the regenerated
+      // PDF reflects today's state. (PDF is regenerated at admin's request — by
+      // definition newer than the original.) The original signatures stored on
+      // the row are PRESERVED in chain_manifest history but the new pdf gets
+      // a fresh content+signature pair so verifiers can re-verify against it.
+      const { data: confJson } = await admin.rpc("compute_conformance", { _review_id: reviewId });
+      const conf = (confJson ?? {}) as Record<string, unknown>;
+      const verdict = String(conf?.verdict ?? cert.determination ?? "fail");
 
       const { data: reviewTierRow } = await admin.from("reviews")
-        .select("risk_tier_declared").eq("id", att.review_id).maybeSingle();
-      const riskTierDeclared = (reviewTierRow?.risk_tier_declared ?? null) as string | null;
-      const { data: derivedTierRaw } = await admin.rpc("derive_risk_tier", { _review_id: att.review_id });
-      const riskTierDerived = (derivedTierRaw ?? "medium") as string;
-
-      const { data: confJson } = await admin.rpc("compute_conformance", { _review_id: att.review_id });
-      const conf = (confJson ?? {}) as Record<string, unknown>;
-
-      const { data: findings } = await admin.from("agent_findings")
-        .select("severity, agent_name, title, aos_control_id").eq("review_id", att.review_id);
+        .select("risk_tier_declared, scenarios").eq("id", reviewId).maybeSingle();
+      const riskTierDeclared = (reviewTierRow?.risk_tier_declared ?? cert.risk_tier_declared ?? null) as string | null;
+      const { data: derivedTierRaw } = await admin.rpc("derive_risk_tier", { _review_id: reviewId });
+      const riskTierDerived = (derivedTierRaw ?? cert.risk_tier_derived ?? "medium") as string;
 
       const { data: chainRows } = await admin.from("audit_log")
         .select("id, event, actor_kind, actor_id, payload, prev_hash, entry_hash, signature, created_at")
-        .eq("review_id", att.review_id).order("created_at", { ascending: true });
+        .eq("review_id", reviewId).order("created_at", { ascending: true });
       const chainManifest = chainRows ?? [];
 
-      const assessorPortrait = await fetchPortraitDataUrl(assessorPortraitSlug);
+      const { data: findings } = await admin.from("agent_findings")
+        .select("severity, agent_name, title, aos_control_id, frameworks").eq("review_id", reviewId);
 
-      // ---------- Build PDF (Aurora style — mirrors issue-attestation) ----------
+      const issuedAt = new Date(cert.issued_at);
+      const expiresAt = new Date(cert.expires_at);
+      const aosVersion = cert.aos_version ?? "v0.1-draft";
+      const organization = cert.organization;
+      const scopeStatement = cert.scope_statement;
+
+      // ---------- Build PDF (Aurora cert style — mirrors issue-certification) ----------
       const doc = new jsPDF({ unit: "pt", format: "letter" });
       const W = doc.internal.pageSize.getWidth();
       const H = doc.internal.pageSize.getHeight();
@@ -147,16 +150,15 @@ Deno.serve(async (req) => {
       const setText = (rgb: [number, number, number]) => doc.setTextColor(rgb[0], rgb[1], rgb[2]);
       const setStroke = (rgb: [number, number, number]) => doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
 
-      // Aurora header band
       setFill(COLOR.indigoDeep); doc.rect(0, 0, W, 96, "F");
       setFill(COLOR.indigo);     doc.rect(0, 70, W, 16, "F");
       setFill(COLOR.emerald);    doc.rect(0, 84, W, 6, "F");
       setFill(COLOR.gold);       doc.rect(0, 90, W, 2, "F");
 
       doc.setFont("helvetica", "bold"); doc.setFontSize(20); setText([255, 255, 255]);
-      doc.text("Attestation of AOS Conformance", 60, 44);
+      doc.text("Compliance Certification", 60, 44);
       doc.setFont("helvetica", "normal"); doc.setFontSize(9.5); setText([200, 210, 240]);
-      doc.text("AiGovOps · Issued by an independent QAGA assessor under QAGAC charter", 60, 62);
+      doc.text("AiGovOps · Co-signed by the Chief Auditors of the Agent Council", 60, 62);
 
       const sealCx = W - 70, sealCy = 48, sealR = 28;
       setFill(COLOR.gold);       doc.circle(sealCx, sealCy, sealR, "F");
@@ -164,31 +166,28 @@ Deno.serve(async (req) => {
       setStroke(COLOR.goldSoft); doc.setLineWidth(1.2); doc.circle(sealCx, sealCy, sealR - 8, "S");
       doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); setText(COLOR.goldSoft);
       doc.text("AOS", sealCx, sealCy - 3, { align: "center" });
-      doc.text((att.aos_version ?? "v0.1").toUpperCase(), sealCx, sealCy + 8, { align: "center" });
+      doc.text(aosVersion.toUpperCase(), sealCx, sealCy + 8, { align: "center" });
 
       setText(COLOR.ink);
       let y = 124;
 
-      // Determination banner
       const verdictColor: Record<string, [number, number, number]> = {
         pass: [22, 163, 74],
         pass_with_compensations: [217, 119, 6],
         fail: [220, 38, 38],
       };
-      const c = verdictColor[att.determination] ?? [80, 80, 80];
+      const c = verdictColor[verdict] ?? [80, 80, 80];
       setFill(c); doc.roundedRect(50, y, W - 100, 42, 6, 6, "F");
       setText([255, 255, 255]); doc.setFont("helvetica", "bold"); doc.setFontSize(15);
-      doc.text(`Determination: ${String(att.determination).toUpperCase().replace(/_/g, " ")}`, W / 2, y + 27, { align: "center" });
+      doc.text(`Determination: ${verdict.toUpperCase().replace(/_/g, " ")}`, W / 2, y + 27, { align: "center" });
       setText(COLOR.ink); y += 60;
 
-      // Risk-tier banner
       const tierLabel = (t: string | null) => (t ? t.toUpperCase() : "—");
       const tierAgree = riskTierDeclared && riskTierDeclared === riskTierDerived;
       const bannerHeight = 56;
       setFill([245, 247, 252]); doc.roundedRect(50, y, W - 100, bannerHeight, 4, 4, "F");
       setFill(tierAgree ? COLOR.emerald : COLOR.violet);
       doc.rect(50, y, 4, bannerHeight, "F");
-
       doc.setFont("helvetica", "bold"); doc.setFontSize(8.5); setText(COLOR.muted);
       doc.text("RISK TIER", 64, y + 14);
       doc.setFont("helvetica", "normal"); doc.setFontSize(9); setText(COLOR.muted);
@@ -211,19 +210,17 @@ Deno.serve(async (req) => {
       setText(COLOR.ink);
       y += bannerHeight + 18;
 
-      // Meta block
       const metaRows: Array<[string, string]> = [
-        ["Organization", att.organization],
-        ["Scope", att.scope_statement],
-        ["AOS Version", att.aos_version],
-        ["Scenarios", (att.scenarios ?? []).join(", ") || "general"],
-        ["QAGA Assessor", assessorName],
-        ["QAGAC Firm", firmName],
+        ["Organization", organization],
+        ["Scope", scopeStatement],
+        ["AOS Version", aosVersion],
+        ["Scenarios", (cert.scenarios ?? []).join(", ") || "general"],
         ["Findings", `${conf.total_findings ?? 0} total · ${conf.critical ?? 0} critical · ${conf.high ?? 0} high · ${conf.medium ?? 0} medium`],
         ["Compensating controls", String(conf.compensations ?? 0)],
-        ["Issued", new Date(att.issued_at).toUTCString()],
-        ["Attestation ID", att.id],
-        ["Review ID", att.review_id],
+        ["Review ID", reviewId],
+        ["Issued", issuedAt.toUTCString()],
+        ["Expires", `${expiresAt.toUTCString()}  (12-month cycle)`],
+        ["Trigger", cert.trigger_kind === "auto" ? "Automatic on Quick Audit completion" : "Manual re-issue"],
       ];
       doc.setFontSize(10);
       for (const [k, v] of metaRows) {
@@ -236,7 +233,6 @@ Deno.serve(async (req) => {
       y += 8;
       setStroke(COLOR.hairline); doc.line(50, y, W - 50, y); y += 16;
 
-      // Top findings (max 6)
       doc.setFont("helvetica", "bold"); doc.setFontSize(11); setText(COLOR.ink);
       doc.text("Top findings", 60, y); y += 14;
       doc.setFont("helvetica", "normal"); doc.setFontSize(9);
@@ -257,39 +253,37 @@ Deno.serve(async (req) => {
           doc.setFont("helvetica", "normal");
           y = wrapPdfText(doc, f.title, W - 120, 60, y, 11);
           y += 3;
-          if (y > H - 240) break;
+          if (y > H - 220) break;
         }
       }
 
-      // Canonical content hash
-      const canonicalBody = JSON.stringify({
-        review_id: att.review_id,
-        organization: att.organization,
-        scope_statement: att.scope_statement,
-        aos_version: att.aos_version,
-        determination: att.determination,
+      const canonicalCertBody = JSON.stringify({
+        review_id: reviewId,
+        organization,
+        scope_statement: scopeStatement,
+        aos_version: aosVersion,
+        determination: verdict,
         conformance: conf,
         risk_tier_declared: riskTierDeclared,
         risk_tier_derived: riskTierDerived,
-        qaga_assessor_id: att.qaga_assessor_id,
-        qaga_firm_id: att.qaga_firm_id,
-        issued_at: att.issued_at,
+        expires_at: expiresAt.toISOString(),
         chain_manifest: chainManifest.map((r: any) => ({
-          event: r.event, prev_hash: r.prev_hash, entry_hash: r.entry_hash,
-          signature: r.signature, created_at: r.created_at,
+          event: r.event, prev_hash: r.prev_hash, entry_hash: r.entry_hash, signature: r.signature, created_at: r.created_at,
         })),
+        issued_at: issuedAt.toISOString(),
       });
-      const contentHash = await sha256Hex(enc.encode(canonicalBody));
-      const qagaSig = await hmacHex(`${signingKey}::qaga::${att.qaga_assessor_id ?? "unknown"}`, contentHash);
+      const contentHash = await sha256Hex(enc.encode(canonicalCertBody));
+      const kenSig = await hmacHex(`${signingKey}::ken-newton`, contentHash);
+      const bobSig = await hmacHex(`${signingKey}::bob-smith`, contentHash);
 
-      // Signature page (single QAGA signer)
-      if (y > H - 220) { doc.addPage(); y = 60; } else { y += 16; }
+      // Signature page
+      if (y > H - 280) { doc.addPage(); y = 60; } else { y += 16; }
       setStroke(COLOR.hairline); doc.line(50, y, W - 50, y); y += 18;
       doc.setFont("helvetica", "bold"); doc.setFontSize(12); setText(COLOR.ink);
-      doc.text("Signed by the QAGA Assessor", 60, y); y += 18;
+      doc.text("Co-signed by the Chief Auditors", 60, y); y += 18;
 
       const drawPortraitSilhouette = (cx: number, cy: number, initial: string, accent: [number, number, number]) => {
-        setFill(COLOR.gold);       doc.circle(cx, cy, 26, "F");
+        setFill(COLOR.gold); doc.circle(cx, cy, 26, "F");
         setFill(COLOR.indigoDeep); doc.circle(cx, cy, 23, "F");
         setStroke(accent); doc.setLineWidth(1.5); doc.circle(cx, cy, 19, "S");
         setFill(COLOR.goldSoft);
@@ -312,8 +306,8 @@ Deno.serve(async (req) => {
           drawPortraitSilhouette(cx, cy, initial, accent);
           return;
         }
-        setStroke(COLOR.gold);   doc.setLineWidth(3);   doc.circle(cx, cy, r, "S");
-        setStroke(accent);       doc.setLineWidth(1.2); doc.circle(cx, cy, r - 4, "S");
+        setStroke(COLOR.gold); doc.setLineWidth(3); doc.circle(cx, cy, r, "S");
+        setStroke(accent); doc.setLineWidth(1.2); doc.circle(cx, cy, r - 4, "S");
         setFill(COLOR.gold); doc.circle(cx + 18, cy + 18, 7, "F");
         setText(COLOR.indigoDeep); doc.setFont("helvetica", "bold"); doc.setFontSize(8);
         doc.text(initial, cx + 18, cy + 21, { align: "center" });
@@ -326,42 +320,45 @@ Deno.serve(async (req) => {
         else drawPortraitSilhouette(cx, cy, initial, accent);
       };
 
+      const sigBlock = (
+        portraitCx: number, portraitCy: number, initial: string, accent: [number, number, number],
+        name: string, role: string, sig: string, blockX: number, dataUrl: string | null,
+      ) => {
+        drawPortrait(portraitCx, portraitCy, initial, accent, dataUrl);
+        const tx = blockX + 64;
+        doc.setFont("helvetica", "bold"); doc.setFontSize(10.5); setText(COLOR.ink);
+        doc.text(name, tx, portraitCy - 8);
+        doc.setFont("helvetica", "italic"); doc.setFontSize(9); setText(COLOR.muted);
+        doc.text(role, tx, portraitCy + 4);
+        setStroke(COLOR.hairline); doc.setLineWidth(0.6);
+        doc.line(tx, portraitCy + 18, blockX + 220, portraitCy + 18);
+        doc.setFont("courier", "normal"); doc.setFontSize(7); setText(COLOR.muted);
+        const shortSig = sig.length > 48 ? `${sig.slice(0, 24)}…${sig.slice(-20)}` : sig;
+        doc.text(shortSig, tx, portraitCy + 28);
+        setText(COLOR.ink);
+      };
+
       const blockY = y + 30;
-      const portraitCx = 82;
-      const initial = (assessorName.trim()[0] ?? "Q").toUpperCase();
-      drawPortrait(portraitCx, blockY, initial, COLOR.violet, assessorPortrait);
-
-      const tx = 144;
-      doc.setFont("helvetica", "bold"); doc.setFontSize(11); setText(COLOR.ink);
-      doc.text(assessorName, tx, blockY - 10);
-      doc.setFont("helvetica", "italic"); doc.setFontSize(9); setText(COLOR.muted);
-      doc.text(assessorRole, tx, blockY + 4);
-      doc.setFont("helvetica", "normal"); doc.setFontSize(9); setText(COLOR.muted);
-      doc.text(`Issuing firm: ${firmName}`, tx, blockY + 17);
-
-      setStroke(COLOR.hairline); doc.setLineWidth(0.6);
-      doc.line(tx, blockY + 28, W - 60, blockY + 28);
-      doc.setFont("courier", "normal"); doc.setFontSize(7); setText(COLOR.muted);
-      const shortSig = qagaSig.length > 60 ? `${qagaSig.slice(0, 30)}…${qagaSig.slice(-26)}` : qagaSig;
-      doc.text(shortSig, tx, blockY + 38);
-      setText(COLOR.ink);
-      y = blockY + 60;
+      sigBlock(82, blockY, "K", COLOR.emerald, ken.display_name, ken.role_title, kenSig, 56, kenPortrait);
+      sigBlock(W / 2 + 26, blockY, "B", COLOR.violet, bob.display_name, bob.role_title, bobSig, W / 2, bobPortrait);
+      y = blockY + 50;
 
       doc.setFont("courier", "normal"); doc.setFontSize(7); setText(COLOR.muted);
-      y = wrapPdfText(doc, `QAGA signature (HMAC-SHA256): ${qagaSig}`, W - 120, 60, y, 9);
-      y = wrapPdfText(doc, `Content sha256:               ${contentHash}`, W - 120, 60, y, 9);
-      y += 6;
+      y = wrapPdfText(doc, `Ken signature (HMAC-SHA256): ${kenSig}`, W - 120, 60, y, 9);
+      y = wrapPdfText(doc, `Bob signature (HMAC-SHA256): ${bobSig}`, W - 120, 60, y, 9);
+      y = wrapPdfText(doc, `Content sha256:              ${contentHash}`, W - 120, 60, y, 9);
+      y += 8;
       doc.setFont("helvetica", "italic"); doc.setFontSize(7.5); setText(COLOR.muted);
-      doc.text("Demonstration signature — HMAC-SHA256 over the canonical content hash. Ed25519 upgrade pending.", 60, y);
-      doc.text("Regenerated via admin backfill — content & signature recomputed from current data.", 60, y + 10);
+      doc.text("Demonstration signatures — HMAC-SHA256 over the canonical content hash. Ed25519 upgrade pending.", 60, y);
+      doc.text("Regenerated via admin backfill — content & signatures recomputed from current data.", 60, y + 10);
       setText(COLOR.ink);
 
       // Chain of custody page
       doc.addPage();
       setFill(COLOR.indigoDeep); doc.rect(0, 0, W, 28, "F");
-      setFill(COLOR.emerald);    doc.rect(0, 26, W, 2, "F");
+      setFill(COLOR.emerald); doc.rect(0, 26, W, 2, "F");
       doc.setFont("helvetica", "bold"); doc.setFontSize(10); setText([255, 255, 255]);
-      doc.text("AiGovOps · QAGA Attestation · Chain of Custody", 60, 18);
+      doc.text("AiGovOps · Compliance Certification · Chain of Custody", 60, 18);
       setText(COLOR.ink);
       y = 60;
 
@@ -382,9 +379,9 @@ Deno.serve(async (req) => {
           if (y > H - 80) {
             doc.addPage();
             setFill(COLOR.indigoDeep); doc.rect(0, 0, W, 28, "F");
-            setFill(COLOR.emerald);    doc.rect(0, 26, W, 2, "F");
+            setFill(COLOR.emerald); doc.rect(0, 26, W, 2, "F");
             doc.setFont("helvetica", "bold"); doc.setFontSize(10); setText([255, 255, 255]);
-            doc.text("AiGovOps · QAGA Attestation · Chain of Custody (cont.)", 60, 18);
+            doc.text("AiGovOps · Compliance Certification · Chain of Custody (cont.)", 60, 18);
             setText(COLOR.ink); doc.setFont("courier", "normal"); doc.setFontSize(8);
             y = 60;
           }
@@ -394,8 +391,8 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Verifier footer on every page
-      const verifierUrl = `${origin}/verify/${att.review_id}`;
+      // Footer with QR on every page
+      const verifierUrl = `${origin}/verify/${reviewId}`;
       const qrData = await QRCode.toDataURL(verifierUrl, { margin: 1, width: 200, color: { dark: "#0E1026", light: "#FFFFFF" } });
       const pageCount = doc.getNumberOfPages();
       for (let p = 1; p <= pageCount; p++) {
@@ -404,9 +401,9 @@ Deno.serve(async (req) => {
         doc.line(50, H - 64, W - 50, H - 64);
         doc.addImage(qrData, "PNG", W - 110, H - 56, 46, 46);
         doc.setFont("helvetica", "bold"); doc.setFontSize(8.5); setText(COLOR.indigoDeep);
-        doc.text("Independently verify this attestation", 60, H - 46);
+        doc.text("Independently verify this certificate", 60, H - 46);
         doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); setText(COLOR.muted);
-        doc.text("Open the OSS verifier and confirm the content hash + signature.", 60, H - 34);
+        doc.text("Open the OSS verifier and confirm the content hash + signatures.", 60, H - 34);
         doc.setFont("courier", "normal"); doc.setFontSize(7.5); setText(COLOR.indigo);
         doc.text(verifierUrl, 60, H - 22);
         doc.setFont("helvetica", "normal"); doc.setFontSize(7); setText(COLOR.muted);
@@ -416,24 +413,37 @@ Deno.serve(async (req) => {
 
       const pdfBytes = new Uint8Array(doc.output("arraybuffer"));
       const pdfHash = await sha256Hex(pdfBytes);
-      const path = `aoc/${att.review_id}.pdf`;
+      const path = `cert/${reviewId}-${Date.now()}.pdf`;
       const { error: upErr } = await admin.storage.from("attestations").upload(path, pdfBytes, {
         contentType: "application/pdf", upsert: true,
       });
       if (upErr) throw upErr;
 
-      await admin.from("attestations").update({ pdf_path: path, pdf_sha256: pdfHash }).eq("id", att.id);
+      // Update existing cert row in-place — refresh PDF + signatures so the
+      // verifier can confirm the redesigned PDF. Original audit chain anchor
+      // (audit_entry_hash / audit_prev_hash) is preserved so the historical
+      // anchor remains intact.
+      await admin.from("certifications").update({
+        pdf_path: path,
+        pdf_sha256: pdfHash,
+        ken_signature: kenSig,
+        bob_signature: bobSig,
+        chain_manifest: chainManifest,
+      }).eq("id", cert.id);
 
       await insertSignedAudit(admin, signingKey, {
-        review_id: att.review_id, actor_id: user.id, actor_kind: "human",
-        event: "attestation.pdf_backfilled",
+        review_id: reviewId, actor_id: user.id, actor_kind: "human",
+        event: "certification.pdf_backfilled",
         payload: {
-          attestation_id: att.id, pdf_sha256: pdfHash, content_sha256: contentHash,
-          organization: att.organization, force,
+          certification_id: cert.id,
+          pdf_sha256: pdfHash,
+          content_sha256: contentHash,
+          signatures: { ken: kenSig, bob: bobSig },
+          organization, force,
         },
       });
 
-      generated.push({ id: att.id, review_id: att.review_id, pdf_path: path });
+      generated.push({ id: cert.id, review_id: reviewId, pdf_path: path });
     }
 
     return new Response(JSON.stringify({ ok: true, generated: generated.length, items: generated }), {
@@ -441,7 +451,7 @@ Deno.serve(async (req) => {
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "unknown";
-    console.error("backfill-attestation-pdfs", msg);
+    console.error("backfill-certification-pdfs", msg);
     return new Response(JSON.stringify({ error: msg }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
