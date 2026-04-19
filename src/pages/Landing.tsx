@@ -12,6 +12,7 @@ import {
   Zap,
   Play,
   Crown,
+  Sparkles,
 } from "lucide-react";
 import { DocsSection } from "@/components/DocsSection";
 import { PublicShell } from "@/components/PublicShell";
