@@ -179,6 +179,48 @@ const Submit = () => {
             </div>
           </div>
 
+          <div>
+            <Label className="mb-2 block flex items-center gap-2">
+              <ShieldAlert className="h-4 w-4 text-primary" /> Risk tier — your self-classification
+            </Label>
+            <p className="text-xs text-muted-foreground mb-2 -mt-1">
+              EU AI Act-style self-classification. The agent pipeline derives its own tier from findings;
+              insurers price against the <em>disagreement</em>. Optional, but strongly recommended.
+            </p>
+            <div className="grid md:grid-cols-3 gap-2">
+              {RISK_TIERS.map((t) => (
+                <label
+                  key={t.id}
+                  className={`flex flex-col gap-1 rounded-md border p-3 cursor-pointer hover:border-primary/40 ${
+                    riskTier === t.id ? "border-primary bg-primary/5" : "border-border bg-card-grad"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="risk_tier"
+                      checked={riskTier === t.id}
+                      onChange={() => setRiskTier(t.id)}
+                      className="h-3.5 w-3.5 accent-primary"
+                    />
+                    <span className="text-sm font-medium">{t.label}</span>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground leading-snug">{t.description}</div>
+                  <div className="text-[10px] font-mono text-muted-foreground/70 pt-1">{t.euAiActMapping}</div>
+                </label>
+              ))}
+            </div>
+            {riskTier && (
+              <button
+                type="button"
+                onClick={() => setRiskTier("")}
+                className="text-[11px] text-muted-foreground hover:text-foreground mt-2 underline"
+              >
+                Clear self-classification
+              </button>
+            )}
+          </div>
+
           <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
             <TabsList className="grid grid-cols-3">
               <TabsTrigger value="paste"><FileCode className="h-4 w-4 mr-1.5" /> Paste</TabsTrigger>
