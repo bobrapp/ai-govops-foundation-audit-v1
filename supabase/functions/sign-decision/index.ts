@@ -44,6 +44,54 @@ Deno.serve(async (req) => {
     }
 
     const admin = createClient(SUPABASE_URL, SERVICE);
+
+    // AUTHORIZATION: gate privileged events behind required roles so unprivileged
+    // users cannot pollute the tamper-evident HMAC chain with fake admin / human
+    // decision records.
+    const requiresAdmin =
+      event === "admin.role_assigned" || event === "admin.role_revoked";
+    const requiresReviewerOrAdmin =
+      event === "human.approved" ||
+      event === "human.rejected" ||
+      event === "human.requested_changes";
+
+    if (requiresAdmin || requiresReviewerOrAdmin) {
+      const { data: isAdmin } = await admin.rpc("has_role", {
+        _user_id: user.id,
+        _role: "admin",
+      });
+      let allowed = isAdmin === true;
+      if (!allowed && requiresReviewerOrAdmin) {
+        const { data: isReviewer } = await admin.rpc("has_role", {
+          _user_id: user.id,
+          _role: "reviewer",
+        });
+        allowed = isReviewer === true;
+      }
+      if (!allowed) {
+        return new Response(
+          JSON.stringify({ error: "forbidden: insufficient role for this event" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+
+    // For review-scoped human events, also confirm the caller has access
+    // to that review (defense in depth on top of role check).
+    if (requiresReviewerOrAdmin && reviewId) {
+      const { data: visibleReview } = await userClient
+        .from("reviews")
+        .select("id")
+        .eq("id", reviewId)
+        .maybeSingle();
+      if (!visibleReview) {
+        return new Response(
+          JSON.stringify({ error: "forbidden: review not accessible" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+
     const result = await insertSignedAudit(admin, signingKey, {
       review_id: reviewId ?? null,
       actor_id: user.id,
