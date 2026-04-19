@@ -14,6 +14,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { CheckCircle2, XCircle, RefreshCw, ShieldAlert, Loader2, FileText, ScanLine, Brain, Scale, FileLock, Activity, ShieldCheck, ShieldX } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { PersonaAvatar } from "@/components/agents/PersonaPrimitives";
+import { agentNameToSlug } from "@/lib/agent-name-mapping";
+import { personaBySlug } from "@/data/agent-personas";
 
 const sevColor: Record<string, string> = {
   info: "bg-muted text-muted-foreground",
@@ -111,8 +114,18 @@ const ReviewDetail = () => {
 
   return (
     <AppShell>
-      <div className="p-8 max-w-6xl mx-auto">
-        <button onClick={() => nav("/dashboard")} className="text-xs font-mono text-muted-foreground hover:text-foreground mb-3">← back</button>
+      <div className="relative">
+        {/* Aurora wash — matches Quick Audit & Submit */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 opacity-70"
+          style={{
+            background:
+              "radial-gradient(ellipse 70% 50% at 15% 0%, hsl(248 70% 22% / 0.55), transparent 65%), radial-gradient(ellipse 60% 50% at 100% 30%, hsl(160 70% 28% / 0.30), transparent 70%)",
+          }}
+        />
+        <div className="p-8 max-w-6xl mx-auto">
+          <button onClick={() => nav("/dashboard")} className="text-xs font-mono text-muted-foreground hover:text-foreground mb-3">← back</button>
         <div className="flex items-start justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">{review.title}</h1>
@@ -174,11 +187,26 @@ const ReviewDetail = () => {
             )}
             {Object.entries(byAgent).map(([agent, fs]) => {
               const Icon = agentIcons[agent] ?? FileText;
+              const slug = agentNameToSlug(agent);
+              const persona = personaBySlug(slug);
               return (
                 <div key={agent} className="rounded-lg border border-border bg-card-grad overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-                    <div className="flex items-center gap-2"><Icon className="h-4 w-4 text-primary" /><span className="font-medium text-sm">{agent}</span></div>
-                    <span className="text-xs font-mono text-muted-foreground">{fs.length} finding{fs.length === 1 ? "" : "s"}</span>
+                    <div className="flex items-center gap-3">
+                      <PersonaAvatar slug={slug} size="sm" />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-3.5 w-3.5 text-primary shrink-0" />
+                          <span className="font-medium text-sm">{agent}</span>
+                        </div>
+                        {persona && (
+                          <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground truncate">
+                            {persona.display_name.replace(/"[^"]+"\s?/g, "").trim()} · {persona.role_title}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-xs font-mono text-muted-foreground shrink-0">{fs.length} finding{fs.length === 1 ? "" : "s"}</span>
                   </div>
                   <div className="divide-y divide-border">
                     {fs.map((f) => (
