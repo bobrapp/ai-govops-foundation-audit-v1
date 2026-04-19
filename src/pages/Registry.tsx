@@ -16,7 +16,7 @@ const Registry = () => {
   useEffect(() => {
     (async () => {
       const [{ data: f }, { data: a }] = await Promise.all([
-        supabase.from("qagac_firms").select("id, name, status, jurisdiction, website, active_assessor_count, charter_at").order("name"),
+        supabase.from("qagac_firms_public").select("id, name, status, jurisdiction, website, active_assessor_count, charter_at").order("name"),
         supabase.from("qaga_assessors").select("id, display_name, jurisdiction, firm_id, badges, qaga_credential_id, qaga_issued_at").order("display_name"),
       ]);
       setFirms((f as Firm[]) ?? []);

@@ -23,14 +23,14 @@ export const EngagementPanel = ({ reviewId }: { reviewId: string }) => {
   const load = async () => {
     const { data: e } = await supabase
       .from("assessor_engagements")
-      .select("*, qaga_assessors(display_name, qaga_credential_id, user_id), qagac_firms(name)")
+      .select("*, qaga_assessors(display_name, qaga_credential_id, user_id), qagac_firms_public(name)")
       .eq("review_id", reviewId)
       .order("created_at", { ascending: false });
     setEngagements(e ?? []);
     if (isAdmin) {
       const { data: a } = await supabase
         .from("qaga_assessors")
-        .select("id, display_name, qaga_credential_id, firm_id, training_level, status, qagac_firms(name)")
+        .select("id, display_name, qaga_credential_id, firm_id, training_level, status, qagac_firms_public(name)")
         .eq("training_level", "qaga").eq("status", "active");
       setAssessors(a ?? []);
     }
@@ -81,7 +81,7 @@ export const EngagementPanel = ({ reviewId }: { reviewId: string }) => {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-medium">{e.qaga_assessors?.display_name} <span className="text-xs font-mono text-muted-foreground">· {e.qaga_assessors?.qaga_credential_id}</span></div>
-                    <div className="text-xs text-muted-foreground">{e.qagac_firms?.name} · client: <span className="font-mono">{e.client_org}</span></div>
+                    <div className="text-xs text-muted-foreground">{e.qagac_firms_public?.name} · client: <span className="font-mono">{e.client_org}</span></div>
                   </div>
                   <Badge className={
                     e.status === "active" ? "bg-primary/20 text-primary" :
@@ -119,7 +119,7 @@ export const EngagementPanel = ({ reviewId }: { reviewId: string }) => {
             <select className="flex-1 h-9 rounded-md border border-input bg-background px-2 text-sm" value={pickAssessor} onChange={(e) => setPickAssessor(e.target.value)}>
               <option value="">— pick a qualified assessor —</option>
               {assessors.map((a: any) => (
-                <option key={a.id} value={a.id}>{a.display_name} ({a.qaga_credential_id}) — {a.qagac_firms?.name}</option>
+                <option key={a.id} value={a.id}>{a.display_name} ({a.qaga_credential_id}) — {a.qagac_firms_public?.name}</option>
               ))}
             </select>
             <Button onClick={request} disabled={busy || !pickAssessor}>
