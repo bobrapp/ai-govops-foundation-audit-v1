@@ -62,6 +62,7 @@ const QuickAudit = () => {
   const [reviewId, setReviewId] = useState<string | null>(null);
   const [findings, setFindings] = useState<Finding[]>([]);
   const [overall, setOverall] = useState<number | null>(null);
+  const [derivedTier, setDerivedTier] = useState<"medium" | "high" | "critical" | null>(null);
   const [lastRunAt, setLastRunAt] = useState<Date | null>(null);
 
   // Cooldown: 1 free run / 24h (bypass for admin + curator)
