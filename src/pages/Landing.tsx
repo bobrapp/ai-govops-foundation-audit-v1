@@ -135,7 +135,7 @@ const Landing = () => {
                         <PersonaAvatar slug={slug} size="md" className="group-hover:scale-105 transition-transform" />
                         {/* Subtle hover label — fades in, doesn't shift layout */}
                         <span className="pointer-events-none absolute top-full mt-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded-md bg-background/90 backdrop-blur-sm border border-border text-[9px] font-mono uppercase tracking-wider text-foreground/90 whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-150 shadow-sm z-10">
-                          {shortName}
+                          {roleLabel}
                         </span>
                       </Link>
                     );
