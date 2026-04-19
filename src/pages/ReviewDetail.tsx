@@ -18,6 +18,8 @@ import { PersonaAvatar } from "@/components/agents/PersonaPrimitives";
 import { agentNameToSlug } from "@/lib/agent-name-mapping";
 import { personaBySlug } from "@/data/agent-personas";
 import { JourneyStepper } from "@/components/journey/JourneyStepper";
+import { ShipReadiness } from "@/components/journey/ShipReadiness";
+import { PartnerReferralCard } from "@/components/journey/PartnerReferralCard";
 
 const sevColor: Record<string, string> = {
   info: "bg-muted text-muted-foreground",
