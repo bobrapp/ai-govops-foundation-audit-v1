@@ -302,3 +302,27 @@ export const portraitFor = (slug: string | null | undefined) =>
 
 export const portraitHeroFor = (slug: string | null | undefined) =>
   slug ? personaBySlug(slug)?.portrait_hero : undefined;
+
+/**
+ * Role-tinted ambient accent (HSL triplet, no `hsl()` wrapper).
+ * Mirrors the palette used by PersonaCard glows so role color is consistent
+ * everywhere a persona appears (cards, dashboard rows, chat handoff chips).
+ */
+const ROLE_ACCENT_HSL: Record<RoleKind, string> = {
+  chief: "38 95% 60%",         // gold
+  cryptography: "248 85% 62%", // indigo
+  security: "188 85% 55%",     // teal/emerald
+  risk: "28 95% 60%",          // amber
+  code: "295 75% 65%",         // magenta/violet
+  systems: "188 90% 55%",      // cyan
+  compliance: "158 78% 48%",   // emerald
+  ethics: "342 80% 65%",       // rose
+  sre: "172 80% 55%",          // mint
+};
+
+export const roleAccentFor = (slug: string | null | undefined): string | undefined => {
+  if (!slug) return undefined;
+  const p = personaBySlug(slug);
+  if (!p) return undefined;
+  return ROLE_ACCENT_HSL[p.role_kind as RoleKind] ?? ROLE_ACCENT_HSL.chief;
+};
