@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { CheckCircle2, XCircle, RefreshCw, ShieldAlert, Loader2, FileText, ScanLine, Brain, Scale, FileLock, Activity, ShieldCheck, ShieldX } from "lucide-react";
+import { CheckCircle2, XCircle, RefreshCw, ShieldAlert, Loader2, FileText, ScanLine, Brain, Scale, FileLock, Activity, ShieldCheck, ShieldX, Link2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { PersonaAvatar } from "@/components/agents/PersonaPrimitives";
 import { agentNameToSlug } from "@/lib/agent-name-mapping";
@@ -345,6 +345,26 @@ const ReviewDetail = () => {
                       reset
                     </button>
                   )}
+                  <div className="ml-auto shrink-0">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(window.location.href);
+                          toast.success("Share link copied", {
+                            description: "Filter & active agent preserved in URL hash.",
+                          });
+                        } catch {
+                          toast.error("Could not copy link");
+                        }
+                      }}
+                      title="Copy a deep-link to this filtered view"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card-grad px-2.5 py-1 text-[11px] font-mono uppercase tracking-wider text-muted-foreground hover:border-primary/50 hover:text-foreground transition"
+                    >
+                      <Link2 className="h-3 w-3" />
+                      copy link
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
