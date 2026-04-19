@@ -377,6 +377,8 @@ function EntryCard({ to, icon: Icon, tone, title, body }: EntryCardProps) {
 }
 
 function NarrativeCard({ slug, step, action, body }: { slug: string; step: string; action: string; body: string }) {
+  const p = personaBySlug(slug);
+  const name = p ? p.display_name.replace(/"[^"]+"\s?/g, "").trim() : slug;
   return (
     <div className="rounded-2xl border border-border bg-card-grad p-5 shadow-elev relative overflow-hidden group hover:border-primary/40 transition-colors">
       <div className="absolute top-3 right-3 text-[10px] font-mono text-muted-foreground/50">{step}</div>
@@ -384,19 +386,12 @@ function NarrativeCard({ slug, step, action, body }: { slug: string; step: strin
         <PersonaAvatar slug={slug} size="md" />
         <div>
           <div className="text-[10px] font-mono uppercase tracking-wider text-primary">{action}</div>
-          <div className="font-semibold text-sm tracking-tight">
-            <NamedCameoName slug={slug} />
-          </div>
+          <div className="font-semibold text-sm tracking-tight">{name}</div>
         </div>
       </div>
       <p className="mt-4 text-sm text-muted-foreground leading-relaxed">{body}</p>
     </div>
   );
-}
-
-function NamedCameoName({ slug }: { slug: string }) {
-  // Just the trimmed display name, sized inline
-  return <NamedCameo slug={slug} size="xs" className="hidden" /> as unknown as JSX.Element;
 }
 
 const agentCards = [
