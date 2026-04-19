@@ -294,17 +294,50 @@ const AgentChat = () => {
             }}
           />
           {!activeThread ? (
-            <div className="flex-1 grid place-items-center text-center px-6">
-              <div className="max-w-md space-y-3">
-                <PageHeader
-                  eyebrow="Free for all signed-in users"
-                  title="Talk to a Chief Auditor"
-                  description="Ken Newton or Bob 'Fair Witness' Smith will run a brief intake, qualify your scope, and draft a Review you can take into Quick Audit."
-                />
-                <Button onClick={startIntakeWithChiefs} disabled={createThread.isPending}>
-                  {createThread.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
-                  Start free intake with Ken & Bob
-                </Button>
+            <div className="flex-1 grid place-items-center px-6 py-10">
+              <div className="w-full max-w-2xl mx-auto text-center space-y-7">
+                {/* Core promise */}
+                <div className="space-y-4">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent/30 bg-glass text-[10px] font-mono uppercase tracking-[0.18em] text-accent">
+                    <Crown className="h-3 w-3" /> Free for all signed-in users
+                  </div>
+                  <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-[1.05]">
+                    Talk to a <span className="text-aurora font-display italic">Chief Auditor.</span>
+                  </h1>
+                  <p className="text-base text-muted-foreground max-w-xl mx-auto leading-relaxed">
+                    Ken Newton or Bob &quot;Fair Witness&quot; Smith will run a brief intake, qualify your
+                    scope, and draft a Review you can take into Quick Audit.
+                  </p>
+                </div>
+
+                {/* Hero CTA — dominant, directly under the promise */}
+                <div className="space-y-3">
+                  <Button
+                    size="lg"
+                    onClick={startIntakeWithChiefs}
+                    disabled={createThread.isPending}
+                    className="h-14 px-7 text-base bg-emerald-grad text-primary-foreground hover:opacity-95 shadow-glow group"
+                  >
+                    {createThread.isPending ? (
+                      <Loader2 className="h-5 w-5 mr-2.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-5 w-5 mr-2.5" />
+                    )}
+                    Start a free intake with Ken &amp; Bob
+                    <ArrowRight className="h-4 w-4 ml-2.5 transition-transform group-hover:translate-x-0.5" />
+                  </Button>
+                  <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[11px] font-mono text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="relative flex h-1.5 w-1.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
+                      </span>
+                      chiefs on duty
+                    </span>
+                    <span>· ~2 min to qualified scope</span>
+                  </div>
+                </div>
+
                 {!canChat && (
                   <div className="text-xs font-mono text-muted-foreground pt-2">
                     Full council chat (1:1 with any agent or Council mode) requires the curator role.{" "}

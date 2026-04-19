@@ -1,8 +1,9 @@
+import type { CSSProperties } from "react";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ShieldCheck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { portraitFor } from "@/data/agent-personas";
+import { portraitFor, roleAccentFor } from "@/data/agent-personas";
 import type { HitlRow, PersonaRow } from "@/hooks/queries/useAgents";
 
 const sevTone: Record<string, string> = {
@@ -47,12 +48,29 @@ export const HitlQueue = ({ rows, personaIndex, loading, pendingCount, onPick }:
       )}
       {rows.map((h) => {
         const persona = personaIndex[h.persona_id];
+        const accent = roleAccentFor(persona?.slug);
         return (
           <button
             key={h.id}
             onClick={() => onPick(h)}
-            className="w-full text-left p-4 hover:bg-secondary/40 transition-colors"
+            className="relative w-full text-left p-4 hover:bg-secondary/40 transition-colors"
+            style={
+              accent
+                ? ({ ["--row-accent" as string]: accent } as CSSProperties)
+                : undefined
+            }
           >
+            {accent && (
+              <span
+                aria-hidden
+                className="pointer-events-none absolute left-0 top-2 bottom-2 w-[3px] rounded-r-sm"
+                style={{
+                  background:
+                    "linear-gradient(180deg, hsl(var(--row-accent) / 0.85), hsl(var(--row-accent) / 0.25))",
+                  boxShadow: "0 0 18px -2px hsl(var(--row-accent) / 0.45)",
+                }}
+              />
+            )}
             <div className="flex items-start gap-3">
               {persona && portraitFor(persona.slug) && (
                 <img
@@ -61,7 +79,12 @@ export const HitlQueue = ({ rows, personaIndex, loading, pendingCount, onPick }:
                   loading="lazy"
                   width={40}
                   height={40}
-                  className="h-10 w-10 rounded-md object-cover object-top border border-border"
+                  className="h-10 w-10 rounded-md object-cover object-top border"
+                  style={
+                    accent
+                      ? { borderColor: `hsl(var(--row-accent) / 0.45)` }
+                      : undefined
+                  }
                 />
               )}
               <div className="min-w-0 flex-1">

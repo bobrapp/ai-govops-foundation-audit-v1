@@ -75,17 +75,38 @@ const Landing = () => {
               <NamedCameo slug="turing" action="verifies the chain" />
             </div>
 
-            <div className="flex flex-wrap gap-3 pt-2">
-              <Link to="/auth?next=/agents/chat">
-                <Button size="lg" className="bg-emerald-grad text-primary-foreground hover:opacity-90 shadow-glow">
-                  <Sparkles className="h-4 w-4 mr-2" /> Talk to Ken or Bob
+            {/* Hero CTA — the intake is the front door. Make it dominant. */}
+            <div className="pt-2 space-y-3">
+              <Link to="/auth?next=/agents/chat" className="block">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto h-14 px-7 text-base bg-emerald-grad text-primary-foreground hover:opacity-95 shadow-glow group"
+                >
+                  <Sparkles className="h-5 w-5 mr-2.5" />
+                  Start a free intake with Ken &amp; Bob
+                  <ArrowRight className="h-4 w-4 ml-2.5 transition-transform group-hover:translate-x-0.5" />
                 </Button>
               </Link>
-              <Link to="/demo/enterprise_oss">
-                <Button size="lg" variant="outline" className="border-secondary/40 hover:bg-secondary/10">
-                  <Play className="h-4 w-4 mr-2" /> Watch the 90-sec demo
-                </Button>
-              </Link>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] font-mono text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="pulse-dot" /> chiefs on duty
+                </span>
+                <span>· no credit card</span>
+                <span>· ~2 min to qualified scope</span>
+              </div>
+
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Link to="/auth?next=/quick-audit">
+                  <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-foreground">
+                    <Zap className="h-3.5 w-3.5 mr-1.5" /> Skip intake — run audit
+                  </Button>
+                </Link>
+                <Link to="/demo/enterprise_oss">
+                  <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-foreground">
+                    <Play className="h-3.5 w-3.5 mr-1.5" /> Watch 90-sec demo
+                  </Button>
+                </Link>
+              </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground pt-2">
