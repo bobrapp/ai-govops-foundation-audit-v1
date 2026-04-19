@@ -122,11 +122,24 @@ const Landing = () => {
 
                 {/* Specialists grid — push to bottom of the card so portraits aren't stranded mid-air */}
                 <div className="grid grid-cols-4 gap-y-3 gap-x-2 flex-1 content-end">
-                  {["turing", "kerckhoffs", "nightingale", "lovelace", "hopper", "pacioli", "arendt", "hamilton"].map((slug) => (
-                    <Link key={slug} to="/agents" className="group">
-                      <PersonaAvatar slug={slug} size="md" className="mx-auto group-hover:scale-105 transition-transform" />
-                    </Link>
-                  ))}
+                  {["turing", "kerckhoffs", "nightingale", "lovelace", "hopper", "pacioli", "arendt", "hamilton"].map((slug) => {
+                    const p = personaBySlug(slug);
+                    const shortName = p?.display_name.replace(/"[^"]+"\s?/g, "").split(" ").slice(-1)[0] ?? slug;
+                    return (
+                      <Link
+                        key={slug}
+                        to="/agents"
+                        className="group relative flex flex-col items-center"
+                        aria-label={p ? `${p.display_name} — ${p.role_title}` : slug}
+                      >
+                        <PersonaAvatar slug={slug} size="md" className="group-hover:scale-105 transition-transform" />
+                        {/* Subtle hover label — fades in, doesn't shift layout */}
+                        <span className="pointer-events-none absolute top-full mt-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded-md bg-background/90 backdrop-blur-sm border border-border text-[9px] font-mono uppercase tracking-wider text-foreground/90 whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-150 shadow-sm z-10">
+                          {shortName}
+                        </span>
+                      </Link>
+                    );
+                  })}
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-border/60 text-center">
