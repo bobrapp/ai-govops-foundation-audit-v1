@@ -136,15 +136,15 @@ const QuickAudit = () => {
     setOverall(null);
     setDerivedTier(null);
     try {
-      // 1. Create review (locked to enterprise_oss)
+      // 1. Create review (uses scenario from URL or defaults to enterprise_oss)
       const { data: review, error: rErr } = await supabase
         .from("reviews")
         .insert({
           submitter_id: user.id,
-          title: "Quick Audit — Enterprise OSS",
+          title: `Quick Audit — ${scenarioInfo.label}`,
           description: "Free quick audit run",
           source_type: "paste",
-          scenarios: ["enterprise_oss"],
+          scenarios: [scenario],
           status: "ingesting",
         })
         .select()
@@ -163,7 +163,7 @@ const QuickAudit = () => {
       // 3. Record the run for rate limiting
       await supabase.from("quick_audit_runs").insert({
         user_id: user.id,
-        scenario: "enterprise_oss",
+        scenario,
         review_id: review.id,
       });
       setLastRunAt(new Date());
@@ -221,9 +221,15 @@ const QuickAudit = () => {
               "radial-gradient(ellipse 70% 50% at 15% 0%, hsl(248 70% 22% / 0.55), transparent 65%), radial-gradient(ellipse 60% 50% at 100% 30%, hsl(160 70% 28% / 0.30), transparent 70%)",
           }}
         />
-        <div className="p-8 max-w-5xl mx-auto">
+        <div className="p-8 max-w-5xl mx-auto space-y-6">
+          {/* Journey rail — step 2 of 5 */}
+          <JourneyStepper
+            current="request"
+            guide={`${scenarioInfo.guide} You're 30 seconds from real findings.`}
+          />
+
           <PageHeader
-            eyebrow="Free · Enterprise OSS scenario"
+            eyebrow={`Free · ${scenarioInfo.label} pack`}
             title="Quick Audit"
             description="Paste any policy-as-code, and the Agent Council runs a real audit. One free run every 24h — full attestation requires a chartered QAGA assessor."
             actions={
