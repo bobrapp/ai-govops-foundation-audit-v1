@@ -59,7 +59,7 @@ export const JourneyStepper = ({ current, guide, className }: JourneyStepperProp
                 active
                   ? "border-primary/60 bg-primary/10 shadow-glow"
                   : done
-                  ? "border-emerald-500/30 bg-emerald-500/5"
+                  ? "border-primary/25 bg-primary/5"
                   : "border-border/60 bg-background/40 hover:border-border",
               )}
             >
@@ -70,7 +70,7 @@ export const JourneyStepper = ({ current, guide, className }: JourneyStepperProp
                     active
                       ? "bg-primary text-primary-foreground"
                       : done
-                      ? "bg-emerald-500/20 text-emerald-400"
+                      ? "bg-primary/20 text-primary"
                       : "bg-muted text-muted-foreground",
                   )}
                 >

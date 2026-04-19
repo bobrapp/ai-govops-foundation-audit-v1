@@ -54,13 +54,13 @@ const CARDS: PathCard[] = [
 ];
 
 const TONE: Record<PathCard["tone"], string> = {
-  rose: "border-rose-500/30 hover:border-rose-500/60 hover:shadow-[0_0_40px_-10px_hsl(342_80%_65%/0.5)]",
+  rose: "border-secondary/30 hover:border-secondary/60 hover:shadow-violet",
   primary: "border-primary/30 hover:border-primary/60 hover:shadow-glow",
   accent: "border-accent/30 hover:border-accent/60 hover:shadow-gold",
 };
 
 const TONE_TEXT: Record<PathCard["tone"], string> = {
-  rose: "text-rose-400",
+  rose: "text-secondary",
   primary: "text-primary",
   accent: "text-accent",
 };
@@ -73,7 +73,7 @@ export const PersonaPathCards = ({ className }: { className?: string }) => {
         return (
           <Link
             key={c.scenario}
-            to={`/auth?next=/quick-audit?scenario=${c.scenario}`}
+            to={`/auth?next=${encodeURIComponent(`/quick-audit?scenario=${c.scenario}`)}`}
             className={cn(
               "group rounded-2xl border bg-card-grad p-5 transition-all",
               TONE[c.tone],
