@@ -518,11 +518,16 @@ const Canary = () => {
                                 <td className="px-4 py-2 font-mono text-xs">
                                   {f.path}
                                 </td>
-                                <td
-                                  className="px-4 py-2 font-mono text-xs text-primary"
-                                  title={f.sha256}
-                                >
-                                  {f.sha256.slice(0, 16)}…
+                                <td className="px-4 py-2 font-mono text-xs text-primary">
+                                  <span className="inline-flex items-center gap-2">
+                                    <span title={f.sha256}>
+                                      {f.sha256.slice(0, 16)}…
+                                    </span>
+                                    <CopyHashButton
+                                      hash={f.sha256}
+                                      path={f.path}
+                                    />
+                                  </span>
                                 </td>
                                 <td className="px-4 py-2 text-right font-mono text-xs text-muted-foreground">
                                   {formatBytes(f.bytes)}
