@@ -173,28 +173,65 @@ const QuickAudit = () => {
     }
   };
 
+  const tierTone: Record<string, string> = {
+    medium: "bg-primary/10 text-primary border-primary/30",
+    high: "bg-warning/15 text-warning border-warning/40",
+    critical: "bg-destructive/10 text-destructive border-destructive/40",
+  };
+
   return (
     <AppShell>
-      <div className="p-8 max-w-5xl mx-auto">
-        <PageHeader
-          eyebrow="Free · Enterprise OSS scenario"
-          title="Quick Audit"
-          description="Paste any policy-as-code, and the Agent Council runs a real audit. One free run every 24h — full attestation requires a chartered QAGA assessor."
-          actions={
-            <div className="flex items-center gap-2">
-              <Link to="/demo/enterprise_oss">
-                <Button variant="outline">
-                  <Play className="h-4 w-4 mr-1.5" /> Watch the demo
-                </Button>
-              </Link>
-              <Link to="/submit">
-                <Button variant="secondary">
-                  Full review <ArrowRight className="h-4 w-4 ml-1.5" />
-                </Button>
-              </Link>
-            </div>
-          }
+      <div className="relative">
+        {/* Aurora wash */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 opacity-70"
+          style={{
+            background:
+              "radial-gradient(ellipse 70% 50% at 15% 0%, hsl(248 70% 22% / 0.55), transparent 65%), radial-gradient(ellipse 60% 50% at 100% 30%, hsl(160 70% 28% / 0.30), transparent 70%)",
+          }}
         />
+        <div className="p-8 max-w-5xl mx-auto">
+          <PageHeader
+            eyebrow="Free · Enterprise OSS scenario"
+            title="Quick Audit"
+            description="Paste any policy-as-code, and the Agent Council runs a real audit. One free run every 24h — full attestation requires a chartered QAGA assessor."
+            actions={
+              <div className="flex items-center gap-2">
+                <Link to="/demo/enterprise_oss">
+                  <Button variant="outline">
+                    <Play className="h-4 w-4 mr-1.5" /> Watch the demo
+                  </Button>
+                </Link>
+                <Link to="/submit">
+                  <Button variant="secondary">
+                    Full review <ArrowRight className="h-4 w-4 ml-1.5" />
+                  </Button>
+                </Link>
+              </div>
+            }
+          />
+
+          {/* Ken intake cameo banner */}
+          <div className="mb-6 rounded-2xl border border-border bg-card/60 backdrop-blur-sm p-4 flex items-center gap-4 shadow-glow">
+            <PersonaAvatar slug="ken-newton" size="lg" />
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-warning flex items-center gap-1.5">
+                <Crown className="h-3 w-3" /> Ken Newton · Chief auditor on intake
+              </div>
+              <h2 className="text-lg font-semibold mt-0.5">
+                Paste your policy. I'll convene the council.
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Eight specialists score it against the active AOS catalog. Florence Nightingale derives an evidence-based risk tier. Bob co-signs only if it's defensible.
+              </p>
+            </div>
+            <Link to="/agents/chat" className="hidden md:inline-block">
+              <Button variant="ghost" size="sm">
+                Talk to Ken first <ArrowRight className="h-4 w-4 ml-1.5" />
+              </Button>
+            </Link>
+          </div>
 
         <div className="grid lg:grid-cols-5 gap-6">
           <Card className="lg:col-span-3 p-4 bg-card-grad">
