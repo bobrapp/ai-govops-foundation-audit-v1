@@ -71,6 +71,7 @@ export function PublicShell({ children, eyebrow = "Review Framework", rightSlot,
             <div>Stewarded by the {FOUNDATION.name} · Apache-2.0 · CC-BY-4.0 spec</div>
             <div className="flex items-center gap-4 flex-wrap justify-center">
               <Link to="/docs" className="hover:text-foreground transition-colors">Docs</Link>
+              <Link to="/docs/vocabulary" className="hover:text-foreground transition-colors">Vocabulary</Link>
               <Link to="/developers" className="hover:text-foreground transition-colors">Developers</Link>
               <Link to="/feed" className="hover:text-foreground transition-colors">Feed</Link>
               <Link to="/registry" className="hover:text-foreground transition-colors">Registry</Link>
