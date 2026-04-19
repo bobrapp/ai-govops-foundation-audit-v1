@@ -49,13 +49,19 @@ Deno.serve(async (req) => {
     // users cannot pollute the tamper-evident HMAC chain with fake admin / human
     // decision records.
     const requiresAdmin =
-      event === "admin.role_assigned" || event === "admin.role_revoked";
+      event === "admin.role_assigned" ||
+      event === "admin.role_revoked" ||
+      event === "admin.claimed";
     const requiresReviewerOrAdmin =
       event === "human.approved" ||
       event === "human.rejected" ||
       event === "human.requested_changes";
 
     if (requiresAdmin || requiresReviewerOrAdmin) {
+      // For admin.claimed, the caller must actually hold the admin role at
+      // the moment they post the event (i.e. claim_first_admin already ran
+      // server-side and granted it). This prevents unprivileged users from
+      // polluting the HMAC chain with fake "I just claimed admin" entries.
       const { data: isAdmin } = await admin.rpc("has_role", {
         _user_id: user.id,
         _role: "admin",
