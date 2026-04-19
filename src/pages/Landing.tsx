@@ -98,6 +98,54 @@ const Landing = () => {
         </p>
       </section>
 
+      <section className="container max-w-6xl mx-auto pb-16">
+        <div className="text-xs font-mono uppercase text-muted-foreground tracking-wider mb-3">
+          For developers &amp; insurers · third-party verification, no login required
+        </div>
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">
+          We don't ask you to trust us. We give you the tools to check.
+        </h2>
+        <p className="text-sm text-muted-foreground max-w-2xl mb-6">
+          The OSS verifier and the public attestation feed are first-class entry points — equal to
+          the console. Anyone can re-prove every signed determination, and underwriters can ingest
+          the full portfolio over HTTP.
+        </p>
+        <div className="grid md:grid-cols-2 gap-4">
+          <Link to="/developers" className="group rounded-xl border border-border bg-card-grad hover:border-primary/40 p-5 transition-colors">
+            <div className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-primary" />
+              <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">npm · @aigovops/verify</span>
+            </div>
+            <div className="mt-3 font-semibold flex items-center gap-1">
+              OSS verifier <ArrowRight className="h-4 w-4 opacity-60 group-hover:translate-x-0.5 transition-transform" />
+            </div>
+            <div className="text-sm text-muted-foreground mt-1">
+              Recompute PDF SHA-256, re-verify the HMAC audit chain, and confirm anchor presence —
+              from your own CI, with no access to our database.
+            </div>
+            <div className="mt-3 flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+              <Terminal className="h-3 w-3" /> npm i @aigovops/verify
+            </div>
+          </Link>
+          <Link to="/feed" className="group rounded-xl border border-border bg-card-grad hover:border-primary/40 p-5 transition-colors">
+            <div className="flex items-center gap-2">
+              <Rss className="h-5 w-5 text-primary" />
+              <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">JSON v1.0 · stable schema</span>
+            </div>
+            <div className="mt-3 font-semibold flex items-center gap-1">
+              Attestation feed <ArrowRight className="h-4 w-4 opacity-60 group-hover:translate-x-0.5 transition-transform" />
+            </div>
+            <div className="text-sm text-muted-foreground mt-1">
+              Machine-readable feed of every active certification with declared vs. derived risk
+              tier and 12-month expiry — priceable across an entire portfolio.
+            </div>
+            <div className="mt-3 flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+              <Terminal className="h-3 w-3" /> curl /functions/v1/attestation-feed
+            </div>
+          </Link>
+        </div>
+      </section>
+
       <DocsSection />
 
       <section className="container max-w-6xl mx-auto pb-20">
