@@ -331,9 +331,8 @@ Deno.serve(async (req) => {
     doc.text("Co-signed by the Chief Auditors", 60, y); y += 18;
 
     // Vector portrait silhouette: indigo medallion with emerald ring + gold initial.
-    // (Can't bundle binary images in a Deno function without a fetch round-trip;
-    // a stylised vector bust keeps the cert self-contained and on-brand.)
-    const drawPortrait = (cx: number, cy: number, initial: string, accent: [number, number, number]) => {
+    // Used as a fallback when the storage fetch for the real portrait failed.
+    const drawPortraitSilhouette = (cx: number, cy: number, initial: string, accent: [number, number, number]) => {
       // Outer gold ring
       setFill(COLOR.gold); doc.circle(cx, cy, 26, "F");
       // Indigo medallion
@@ -351,11 +350,49 @@ Deno.serve(async (req) => {
       doc.text(initial, cx + 18, cy + 21, { align: "center" });
     };
 
+    // Photo portrait: real JPEG embedded as base64, framed with the same
+    // gold ring + accent ring as the silhouette so the brand language is consistent.
+    // jsPDF's addImage doesn't support true circular clipping; we render the photo
+    // as a square inside the medallion and overlay the gold ring on top.
+    const drawPortraitPhoto = (
+      cx: number, cy: number, initial: string,
+      accent: [number, number, number], dataUrl: string,
+    ) => {
+      const r = 26;
+      // Indigo backdrop (visible at the corners outside the photo)
+      setFill(COLOR.indigoDeep); doc.circle(cx, cy, r, "F");
+      // Photo (square inscribed roughly in the inner ring)
+      const size = 38; // 2 × ~19 inner radius
+      try {
+        doc.addImage(dataUrl, "JPEG", cx - size / 2, cy - size / 2, size, size, undefined, "FAST");
+      } catch (err) {
+        console.warn("addImage failed; falling back to silhouette:", err);
+        drawPortraitSilhouette(cx, cy, initial, accent);
+        return;
+      }
+      // Gold outer ring (drawn AFTER photo so it crops the corners visually)
+      setStroke(COLOR.gold); doc.setLineWidth(3); doc.circle(cx, cy, r, "S");
+      // Accent inner ring (emerald for Ken, violet for Bob)
+      setStroke(accent); doc.setLineWidth(1.2); doc.circle(cx, cy, r - 4, "S");
+      // Initial pip (lower-right corner)
+      setFill(COLOR.gold); doc.circle(cx + 18, cy + 18, 7, "F");
+      setText(COLOR.indigoDeep); doc.setFont("helvetica", "bold"); doc.setFontSize(8);
+      doc.text(initial, cx + 18, cy + 21, { align: "center" });
+    };
+
+    const drawPortrait = (
+      cx: number, cy: number, initial: string,
+      accent: [number, number, number], dataUrl: string | null,
+    ) => {
+      if (dataUrl) drawPortraitPhoto(cx, cy, initial, accent, dataUrl);
+      else drawPortraitSilhouette(cx, cy, initial, accent);
+    };
+
     const sigBlock = (
       portraitCx: number, portraitCy: number, initial: string, accent: [number, number, number],
-      name: string, role: string, sig: string, blockX: number,
+      name: string, role: string, sig: string, blockX: number, dataUrl: string | null,
     ) => {
-      drawPortrait(portraitCx, portraitCy, initial, accent);
+      drawPortrait(portraitCx, portraitCy, initial, accent, dataUrl);
       const tx = blockX + 64;
       doc.setFont("helvetica", "bold"); doc.setFontSize(10.5); setText(COLOR.ink);
       doc.text(name, tx, portraitCy - 8);
@@ -372,8 +409,8 @@ Deno.serve(async (req) => {
 
     // Two side-by-side signature blocks
     const blockY = y + 30;
-    sigBlock(82, blockY, "K", COLOR.emerald, ken.display_name, ken.role_title, kenSig, 56);
-    sigBlock(W / 2 + 26, blockY, "B", COLOR.violet, bob.display_name, bob.role_title, bobSig, W / 2);
+    sigBlock(82, blockY, "K", COLOR.emerald, ken.display_name, ken.role_title, kenSig, 56, kenPortrait);
+    sigBlock(W / 2 + 26, blockY, "B", COLOR.violet, bob.display_name, bob.role_title, bobSig, W / 2, bobPortrait);
     y = blockY + 50;
 
     // Full sig hashes in fine print (auditors can verify via /verify)
