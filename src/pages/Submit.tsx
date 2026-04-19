@@ -11,9 +11,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { Loader2, GitBranch, FileCode, UploadCloud, Sparkles, ChevronDown } from "lucide-react";
+import { Loader2, GitBranch, FileCode, UploadCloud, Sparkles, ChevronDown, ShieldAlert } from "lucide-react";
 
 import { PRESETS, type Preset, type Scenario } from "@/data/policy-presets";
+import { RISK_TIERS, type RiskTier } from "@/lib/control-objectives";
 
 const SCENARIOS: { id: Scenario; label: string; desc: string }[] = [
   { id: "enterprise_oss", label: "Enterprise OSS adoption", desc: "OpenCLAW, vector DBs, foundation models inside a regulated org." },
