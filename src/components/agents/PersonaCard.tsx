@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { Crown, Shield, Lock, BarChart3, Code2, Server, Scale, Heart, Activity } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PersonaMeta, RoleKind } from "@/data/agent-personas";
