@@ -46,7 +46,17 @@ const ReviewDetail = () => {
   const [chain, setChain] = useState<{ ok: boolean; count: number; results?: Array<{ ok: boolean; reason?: string }> } | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
-  const [hiddenSeverities, setHiddenSeverities] = useState<Set<string>>(new Set());
+  // Initialize from URL hash so deep-links restore filter state
+  const initialHash = (() => {
+    const h = typeof window !== "undefined" ? window.location.hash.replace(/^#/, "") : "";
+    const params = new URLSearchParams(h);
+    return {
+      hide: new Set((params.get("hide") ?? "").split(",").filter(Boolean)),
+      agent: params.get("agent") ?? null,
+    };
+  })();
+  const [hiddenSeverities, setHiddenSeverities] = useState<Set<string>>(initialHash.hide);
+  const [pendingAgentScroll, setPendingAgentScroll] = useState<string | null>(initialHash.agent);
 
   const load = useCallback(async () => {
     if (!id) return;
