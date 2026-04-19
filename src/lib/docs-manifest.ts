@@ -1,4 +1,4 @@
-import { FileText, FileQuestion, FileBadge, Presentation, BookOpen, Image as ImageIcon, type LucideIcon } from "lucide-react";
+import { FileText, FileQuestion, FileBadge, Presentation, BookOpen, Image as ImageIcon, AlertTriangle, type LucideIcon } from "lucide-react";
 
 export type DocKind = "markdown" | "pdf" | "pptx" | "docx" | "yaml" | "png";
 
@@ -83,6 +83,18 @@ export const DOCS: DocEntry[] = [
     updated: "2026-04-19",
     icon: ImageIcon,
     file: "/docs/AiGovOps_Hero_Poster.png",
+  },
+  {
+    id: "risk-scenarios",
+    title: "Risk Scenarios & AI-Fails",
+    description:
+      "Industry-by-industry scenarios (healthcare, legal, HR, media, real estate, manufacturing) plus a verified AI-fail register — every dollar figure cited to a public source.",
+    kind: "markdown",
+    badge: "REF",
+    size: "live",
+    updated: "2026-04-19",
+    icon: AlertTriangle,
+    route: "/docs/risk-scenarios",
   },
 ];
 
