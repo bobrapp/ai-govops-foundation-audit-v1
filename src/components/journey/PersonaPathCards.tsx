@@ -25,30 +25,30 @@ const CARDS: PathCard[] = [
     scenario: "healthcare_codegen",
     emoji: "🏥",
     icon: Stethoscope,
-    iam: "I am a healthcare team",
-    what: "shipping a model that affects a patient",
-    packLabel: "High-stakes AI",
-    example: "e.g. a cancer risk-scoring tool",
+    iam: "Patient harm from AI",
+    what: "I'm shipping a model whose output reaches a patient. I need to prove it won't hurt them.",
+    packLabel: "Healthcare · HIPAA + EU AI Act Art. 6",
+    example: "e.g. cancer risk-scoring · clinical triage · diagnosis aid",
     tone: "rose",
   },
   {
     scenario: "general",
-    emoji: "🛠️",
+    emoji: "🚀",
     icon: Rocket,
-    iam: "I am a tech founder",
-    what: "shipping a generative AI product",
-    packLabel: "AI Product Governance",
-    example: "e.g. a B2B GenAI feature",
+    iam: "Shipping GenAI without a lawyer in the room",
+    what: "I'm a founder. I need a defensible answer to 'is this safe to launch?' before the first paying customer.",
+    packLabel: "Founder · AI product governance",
+    example: "e.g. B2B copilot · agentic workflow · LLM-backed feature",
     tone: "primary",
   },
   {
     scenario: "enterprise_oss",
     emoji: "🏛️",
     icon: Building2,
-    iam: "I am an auditor or CPA firm",
-    what: "certifying a client's AI system",
-    packLabel: "QAGAC Certification",
-    example: "e.g. SOC 2 + AI add-on",
+    iam: "Certifying somebody else's AI",
+    what: "I'm an auditor or CPA firm. I need a chain my client's regulator and their insurer will accept.",
+    packLabel: "Auditor · QAGAC certification",
+    example: "e.g. SOC 2 + AI add-on · ISO 42001 readiness",
     tone: "accent",
   },
 ];
@@ -86,11 +86,11 @@ export const PersonaPathCards = ({ className }: { className?: string }) => {
             <div className="mt-3 text-[10px] font-mono uppercase tracking-[0.16em] text-muted-foreground">
               {c.packLabel}
             </div>
-            <div className="mt-1 font-semibold text-sm leading-tight">{c.iam}</div>
-            <div className="text-xs text-muted-foreground mt-1 leading-relaxed">{c.what}</div>
-            <div className="mt-3 text-[10px] font-mono text-muted-foreground/70">{c.example}</div>
-            <div className={cn("mt-3 inline-flex items-center gap-1 text-xs font-semibold", TONE_TEXT[c.tone])}>
-              Start here <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+            <div className={cn("mt-1 font-bold text-base leading-snug", TONE_TEXT[c.tone])}>{c.iam}</div>
+            <div className="text-xs text-foreground/85 mt-1.5 leading-relaxed">{c.what}</div>
+            <div className="mt-3 text-[10px] font-mono text-muted-foreground/70 leading-relaxed">{c.example}</div>
+            <div className={cn("mt-4 inline-flex items-center gap-1 text-xs font-semibold", TONE_TEXT[c.tone])}>
+              Pick this problem <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
             </div>
           </Link>
         );
