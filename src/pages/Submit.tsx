@@ -30,6 +30,7 @@ const Submit = () => {
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<"paste" | "upload" | "github">("paste");
   const [scenarios, setScenarios] = useState<Scenario[]>(["general"]);
+  const [riskTier, setRiskTier] = useState<RiskTier | "">("");
   const [code, setCode] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -88,6 +89,7 @@ const Submit = () => {
           source_type: tab,
           source_url,
           scenarios,
+          risk_tier_declared: riskTier || null,
           status: "ingesting",
         })
         .select()
