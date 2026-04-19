@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,32 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { NamedCameo, PersonaAvatar } from "@/components/agents/PersonaPrimitives";
+import { JourneyStepper } from "@/components/journey/JourneyStepper";
+
+type ScenarioTag = "enterprise_oss" | "healthcare_codegen" | "generative_ip" | "hr_behavior" | "general";
+
+const SCENARIO_GUIDE: Record<ScenarioTag, { label: string; guide: string; sample?: string }> = {
+  healthcare_codegen: {
+    label: "Healthcare AI",
+    guide: "You're shipping a model that touches patient care. We'll stress-test it for HIPAA, EU AI Act Article 6 (high-risk), and patient-harm edge cases. Paste the policy or system card that governs it.",
+  },
+  general: {
+    label: "AI Product Governance",
+    guide: "You're a founder shipping a GenAI product. We'll check policy completeness, dependency risk, and the worst-case failure for your end user. Paste the policy bundle that governs the feature.",
+  },
+  enterprise_oss: {
+    label: "Enterprise OSS / Auditor pack",
+    guide: "Auditing AI inside a regulated org — or certifying a client's. We'll map findings to SOC 2, ISO 42001, and AOS controls so you can hand the report to a partner.",
+  },
+  generative_ip: {
+    label: "Generative IP",
+    guide: "You're producing music, art, or video. We'll audit the copyright assertion chain end-to-end.",
+  },
+  hr_behavior: {
+    label: "HR & insurable risk",
+    guide: "You're shipping AI that touches hiring, evaluation, or employee behavior. We'll surface EEOC, harassment, and bias exposure.",
+  },
+};
 
 const SAMPLE = `package aigovops.openclaw
 
@@ -56,6 +82,10 @@ const QuickAudit = () => {
   const { user } = useAuth();
   const { isAdmin, isCurator } = useRoles();
   const bypass = isAdmin || isCurator;
+  const [params] = useSearchParams();
+  const scenarioParam = (params.get("scenario") as ScenarioTag | null) ?? "enterprise_oss";
+  const scenario: ScenarioTag = SCENARIO_GUIDE[scenarioParam] ? scenarioParam : "enterprise_oss";
+  const scenarioInfo = SCENARIO_GUIDE[scenario];
 
   const [code, setCode] = useState(SAMPLE);
   const [busy, setBusy] = useState(false);
@@ -106,15 +136,15 @@ const QuickAudit = () => {
     setOverall(null);
     setDerivedTier(null);
     try {
-      // 1. Create review (locked to enterprise_oss)
+      // 1. Create review (uses scenario from URL or defaults to enterprise_oss)
       const { data: review, error: rErr } = await supabase
         .from("reviews")
         .insert({
           submitter_id: user.id,
-          title: "Quick Audit — Enterprise OSS",
+          title: `Quick Audit — ${scenarioInfo.label}`,
           description: "Free quick audit run",
           source_type: "paste",
-          scenarios: ["enterprise_oss"],
+          scenarios: [scenario],
           status: "ingesting",
         })
         .select()
@@ -133,7 +163,7 @@ const QuickAudit = () => {
       // 3. Record the run for rate limiting
       await supabase.from("quick_audit_runs").insert({
         user_id: user.id,
-        scenario: "enterprise_oss",
+        scenario,
         review_id: review.id,
       });
       setLastRunAt(new Date());
@@ -191,9 +221,15 @@ const QuickAudit = () => {
               "radial-gradient(ellipse 70% 50% at 15% 0%, hsl(248 70% 22% / 0.55), transparent 65%), radial-gradient(ellipse 60% 50% at 100% 30%, hsl(160 70% 28% / 0.30), transparent 70%)",
           }}
         />
-        <div className="p-8 max-w-5xl mx-auto">
+        <div className="p-8 max-w-5xl mx-auto space-y-6">
+          {/* Journey rail — step 2 of 5 */}
+          <JourneyStepper
+            current="request"
+            guide={`${scenarioInfo.guide} You're 30 seconds from real findings.`}
+          />
+
           <PageHeader
-            eyebrow="Free · Enterprise OSS scenario"
+            eyebrow={`Free · ${scenarioInfo.label} pack`}
             title="Quick Audit"
             description="Paste any policy-as-code, and the Agent Council runs a real audit. One free run every 24h — full attestation requires a chartered QAGA assessor."
             actions={

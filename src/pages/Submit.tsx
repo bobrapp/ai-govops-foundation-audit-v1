@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Loader2, GitBranch, FileCode, UploadCloud, Sparkles, ChevronDown, ShieldAlert, Crown, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { NamedCameo, PersonaAvatar } from "@/components/agents/PersonaPrimitives";
+import { JourneyStepper } from "@/components/journey/JourneyStepper";
 
 import { PRESETS, type Preset, type Scenario } from "@/data/policy-presets";
 import { RISK_TIERS, type RiskTier } from "@/lib/control-objectives";
@@ -29,6 +30,7 @@ const SCENARIOS: { id: Scenario; label: string; desc: string }[] = [
 const Submit = () => {
   const { user } = useAuth();
   const nav = useNavigate();
+  const [params] = useSearchParams();
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<"paste" | "upload" | "github">("paste");
   const [scenarios, setScenarios] = useState<Scenario[]>(["general"]);
@@ -36,6 +38,14 @@ const Submit = () => {
   const [code, setCode] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+
+  // Honor ?scenario= from the persona path cards
+  useEffect(() => {
+    const s = params.get("scenario") as Scenario | null;
+    if (s && SCENARIOS.some((x) => x.id === s)) {
+      setScenarios([s]);
+    }
+  }, [params]);
 
   const loadPreset = (preset: Preset) => {
     setTab("paste");
@@ -132,8 +142,14 @@ const Submit = () => {
               "radial-gradient(ellipse 70% 50% at 15% 0%, hsl(248 70% 22% / 0.55), transparent 65%), radial-gradient(ellipse 60% 50% at 100% 30%, hsl(160 70% 28% / 0.30), transparent 70%)",
           }}
         />
-        <div className="p-8 max-w-3xl mx-auto">
-          <div className="flex items-start justify-between gap-4 mb-6">
+        <div className="p-8 max-w-3xl mx-auto space-y-6">
+          {/* Journey rail — step 2 of 5 */}
+          <JourneyStepper
+            current="request"
+            guide="Three things only: a title, the policy bundle (paste / upload / GitHub), and the scenario pack(s). The agents do the rest. Tooltips on every term — hover the chips below to see what AOC, AOS, and QAGAC mean in plain English."
+          />
+
+          <div className="flex items-start justify-between gap-4">
             <div>
               <h1 className="text-2xl font-semibold tracking-tight">New review</h1>
               <p className="text-sm text-muted-foreground">Submit a policy-as-code bundle for end-to-end agentic review.</p>

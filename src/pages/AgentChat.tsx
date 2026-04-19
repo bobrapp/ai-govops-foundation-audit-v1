@@ -25,6 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { PortraitStage } from "@/components/agents/PortraitStage";
+import { JourneyStepper } from "@/components/journey/JourneyStepper";
 
 type Scenario = "enterprise_oss" | "healthcare_codegen" | "generative_ip" | "hr_behavior" | "general";
 
@@ -293,6 +294,13 @@ const AgentChat = () => {
                 "radial-gradient(ellipse 60% 50% at 20% 0%, hsl(248 70% 22% / 0.55), transparent 60%), radial-gradient(ellipse 60% 50% at 100% 100%, hsl(160 70% 28% / 0.30), transparent 65%)",
             }}
           />
+          {/* Journey rail — step 3 of 5: Watch the council */}
+          <div className="px-4 pt-4">
+            <JourneyStepper
+              current="watch"
+              guide="Two chiefs run intake. They qualify scope, then specialists tear the bundle apart. Every handoff is logged. You'll see who said what, in real time."
+            />
+          </div>
           {!activeThread ? (
             <div className="flex-1 grid place-items-center px-6 py-10">
               <div className="w-full max-w-2xl mx-auto text-center space-y-7">

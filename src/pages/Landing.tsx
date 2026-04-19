@@ -24,6 +24,8 @@ import { PersonaAvatar, PersonaStrip, NamedCameo } from "@/components/agents/Per
 import { personaBySlug } from "@/data/agent-personas";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { FOUNDATION, PROJECT, STANDARD } from "@/lib/config";
+import { JourneyStepper } from "@/components/journey/JourneyStepper";
+import { PersonaPathCards } from "@/components/journey/PersonaPathCards";
 
 const Landing = () => {
   usePageMeta({
@@ -174,8 +176,33 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* STEP 1 — Choose your path (council-mandated "I am…" cards) */}
+      <section className="container max-w-6xl mx-auto pb-12">
+        <JourneyStepper
+          current="land"
+          guide="One sentence: you ship an AI artifact that affects a human → you submit its policy bundle → ten agents review it → a chartered human co-signs → math seals it → you get a verifiable certificate. Pick the path that sounds like you."
+        />
+        <div className="mt-6 mb-3 flex items-end justify-between gap-3 flex-wrap">
+          <div>
+            <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+              Step 1 of 5 · Recognize yourself
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight mt-1">
+              I am…
+            </h2>
+          </div>
+          <p className="text-sm text-muted-foreground max-w-md">
+            Click the card that fits. We'll pre-load the right scenario pack and walk you through the rest in plain English.
+          </p>
+        </div>
+        <PersonaPathCards />
+      </section>
+
       {/* QUICK ENTRY POINTS */}
       <section className="container max-w-6xl mx-auto pb-20">
+        <div className="text-[10px] font-mono uppercase text-muted-foreground tracking-wider mb-3">
+          Or jump straight to a tool
+        </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <EntryCard
             to="/auth?next=/agents/chat"

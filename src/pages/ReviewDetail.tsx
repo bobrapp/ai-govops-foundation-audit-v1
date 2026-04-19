@@ -17,6 +17,7 @@ import { formatDistanceToNow } from "date-fns";
 import { PersonaAvatar } from "@/components/agents/PersonaPrimitives";
 import { agentNameToSlug } from "@/lib/agent-name-mapping";
 import { personaBySlug } from "@/data/agent-personas";
+import { JourneyStepper } from "@/components/journey/JourneyStepper";
 
 const sevColor: Record<string, string> = {
   info: "bg-muted text-muted-foreground",
@@ -203,8 +204,19 @@ const ReviewDetail = () => {
               "radial-gradient(ellipse 70% 50% at 15% 0%, hsl(248 70% 22% / 0.55), transparent 65%), radial-gradient(ellipse 60% 50% at 100% 30%, hsl(160 70% 28% / 0.30), transparent 70%)",
           }}
         />
-        <div className="p-8 max-w-6xl mx-auto">
-          <button onClick={() => nav("/dashboard")} className="text-xs font-mono text-muted-foreground hover:text-foreground mb-3">← back</button>
+        <div className="p-8 max-w-6xl mx-auto space-y-6">
+          {/* Journey rail — step 4 (attest) once analyzing finishes; step 5 (cert) once approved */}
+          <JourneyStepper
+            current={review.status === "approved" ? "certificate" : "attest"}
+            guide={
+              review.status === "approved"
+                ? "Sealed. Open the Certification tab for the verifiable PDF + QR. Anyone can re-verify the chain without an account."
+                : running
+                ? "The council is still working. Findings will stream in. When they finish, a chartered human reviews and co-signs."
+                : "Findings are in. A chartered human now reads every flag, weighs your compensating controls, and signs an Attestation of Conformance — the irreplaceable human step."
+            }
+          />
+          <button onClick={() => nav("/dashboard")} className="text-xs font-mono text-muted-foreground hover:text-foreground">← back</button>
         <div className="flex items-start justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">{review.title}</h1>
