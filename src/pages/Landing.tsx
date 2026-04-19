@@ -17,13 +17,13 @@ import {
 import { DocsSection } from "@/components/DocsSection";
 import { PublicShell } from "@/components/PublicShell";
 import { usePageMeta } from "@/hooks/usePageMeta";
-import { FOUNDATION, PROJECT } from "@/lib/config";
+import { FOUNDATION, PROJECT, STANDARD } from "@/lib/config";
 
 const Landing = () => {
   usePageMeta({
-    title: "AiGovOps Review Framework — Policy-as-Code, audited & sealed",
+    title: "AiGovOps Review Framework — Agents review. Humans decide. Math proves.",
     description:
-      "Run your AI governance policy bundle through agent reviewers, attest with a chartered human, and seal every step in an HMAC-SHA256 audit chain anyone can verify.",
+      "Reference implementation of the AiGovOps Open Standard (AOS). SLSA-style signed attestations for AI governance — verified by anyone, priceable by insurers, hostable at OpenSSF.",
     canonical: "/",
     jsonLd: {
       "@context": "https://schema.org",
@@ -41,14 +41,15 @@ const Landing = () => {
     <PublicShell>
       <section className="container max-w-6xl mx-auto pt-16 pb-16 text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-card-grad text-xs font-mono text-muted-foreground mb-6">
-          <span className="pulse-dot" /> 10-agent council · signed audit chain
+          <span className="pulse-dot" /> Reference implementation · {STANDARD.longName} {STANDARD.version}
         </div>
         <h1 className="text-5xl md:text-6xl font-bold tracking-tight leading-[1.05] max-w-4xl mx-auto">
-          Audit your AI policy in <span className="text-emerald-grad">90 seconds</span>.
+          Agents review. Humans decide. <span className="text-emerald-grad">Math proves.</span>
         </h1>
         <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
-          Paste a policy, watch the council debate it, and get a signed determination.
-          Free quick audit — full attestation by a chartered QAGA assessor.
+          SLSA-style signed attestations, applied to AI governance. A 10-agent council assesses your
+          policy, a chartered human approves, and an HMAC-chained audit trail any third party can
+          verify — without your cooperation.
         </p>
 
         <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto text-left">
