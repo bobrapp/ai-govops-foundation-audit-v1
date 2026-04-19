@@ -210,18 +210,24 @@ const Verify = () => {
 
                     {/* Co-signatures */}
                     <div className="grid sm:grid-cols-2 gap-3">
-                      <div className="rounded-md border border-border/60 p-3 space-y-1">
-                        <div className="text-xs font-medium">Ken &quot;The Chief&quot; Newton</div>
-                        <div className="text-[10px] text-muted-foreground">Chief AIgovops Auditor</div>
-                        <div className="font-mono text-[10px] break-all text-muted-foreground pt-1">
-                          sig: {c.ken_signature ?? "—"}
+                      <div className="rounded-xl border border-accent/30 bg-card-grad p-3 flex items-start gap-3 shadow-gold">
+                        <PersonaAvatar slug="ken-newton" size="md" />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-semibold">Ken Newton</div>
+                          <div className="text-[10px] font-mono uppercase tracking-wider text-accent">Chief auditor</div>
+                          <div className="font-mono text-[10px] break-all text-muted-foreground pt-1">
+                            sig: {c.ken_signature ?? "—"}
+                          </div>
                         </div>
                       </div>
-                      <div className="rounded-md border border-border/60 p-3 space-y-1">
-                        <div className="text-xs font-medium">Bob &quot;Fair Witness&quot; Smith</div>
-                        <div className="text-[10px] text-muted-foreground">Co-Chief Fair Witness Auditor</div>
-                        <div className="font-mono text-[10px] break-all text-muted-foreground pt-1">
-                          sig: {c.bob_signature ?? "—"}
+                      <div className="rounded-xl border border-accent/30 bg-card-grad p-3 flex items-start gap-3 shadow-gold">
+                        <PersonaAvatar slug="bob-smith" size="md" />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-semibold">Bob Smith</div>
+                          <div className="text-[10px] font-mono uppercase tracking-wider text-accent">Co-chief · Fair Witness</div>
+                          <div className="font-mono text-[10px] break-all text-muted-foreground pt-1">
+                            sig: {c.bob_signature ?? "—"}
+                          </div>
                         </div>
                       </div>
                     </div>
