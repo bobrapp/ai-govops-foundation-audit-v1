@@ -38,7 +38,9 @@ const toHex = (buf: ArrayBuffer) =>
   Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
 
 async function sha256Hex(bytes: Uint8Array): Promise<string> {
-  return toHex(await crypto.subtle.digest("SHA-256", bytes));
+  // Slice into a fresh ArrayBuffer to satisfy strict BufferSource typing.
+  const buf = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+  return toHex(await crypto.subtle.digest("SHA-256", buf));
 }
 
 /**
@@ -164,11 +166,7 @@ const Developers = () => {
       <main className="container max-w-5xl mx-auto pt-12 pb-20 space-y-10">
         <PageHeader
           eyebrow="Open-source verifier"
-          title={
-            <>
-              <span className="font-mono text-primary">{PROJECT.verifierPackage}</span>
-            </>
-          }
+          title={PROJECT.verifierPackage}
           description="Reference implementation of the AOS verification protocol. Anyone — insurer, regulator, customer, journalist — can independently verify an attestation without trusting the issuing server. Dependency-free, runtime-agnostic, Apache-2.0."
         />
 
