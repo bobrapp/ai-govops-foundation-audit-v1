@@ -17,6 +17,7 @@ import { formatDistanceToNow } from "date-fns";
 import { PersonaAvatar } from "@/components/agents/PersonaPrimitives";
 import { agentNameToSlug } from "@/lib/agent-name-mapping";
 import { personaBySlug } from "@/data/agent-personas";
+import { JourneyStepper } from "@/components/journey/JourneyStepper";
 
 const sevColor: Record<string, string> = {
   info: "bg-muted text-muted-foreground",
