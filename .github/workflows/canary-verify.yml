@@ -1,0 +1,122 @@
+name: Canary Verify
+
+# Weekly tamper-evidence check for governance-critical files.
+# Verifies the SHA-256 manifest at .canary-manifest.json matches files on disk.
+# On drift, opens (or updates) a GitHub issue tagged `security`.
+#
+# Also runs on every PR that touches a covered path so reviewers see drift
+# inline, before merge.
+
+on:
+  schedule:
+    # Mondays 13:00 UTC
+    - cron: "0 13 * * 1"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "supabase/functions/**"
+      - "supabase/migrations/**"
+      - "public/specs/**"
+      - ".canary-manifest.json"
+      - "scripts/verify-canary.mjs"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Verify canary manifest
+        id: verify
+        run: |
+          set +e
+          node scripts/verify-canary.mjs --json > canary-report.json
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+          cat canary-report.json
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canary-report
+          path: canary-report.json
+
+      - name: Open issue on drift
+        if: steps.verify.outputs.exit_code != '0' && github.event_name != 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('canary-report.json', 'utf8'));
+            const title = `[canary] ${report.drift_count} governance-critical file(s) drifted`;
+
+            const lines = report.drift.map(d => {
+              if (d.kind === 'missing') {
+                return `- **MISSING** \`${d.path}\` (expected sha256 \`${d.expected.slice(0,12)}…\`)`;
+              }
+              return `- **MODIFIED** \`${d.path}\`\n  - expected: \`${d.expected.slice(0,12)}…\` (${d.expected_bytes} bytes)\n  - actual:   \`${d.actual.slice(0,12)}…\` (${d.actual_bytes} bytes)`;
+            }).join('\n');
+
+            const body = [
+              `🚨 The weekly canary check detected drift on governance-critical files.`,
+              ``,
+              `**Manifest generated:** ${report.manifest_generated_at}`,
+              `**Files checked:** ${report.checked}`,
+              `**Drift count:** ${report.drift_count}`,
+              ``,
+              `### Drift`,
+              lines,
+              ``,
+              `### What to do`,
+              `1. Review the diff for each file. Was the change intentional and reviewed via PR?`,
+              `2. If intentional → regenerate the manifest:`,
+              `   \`\`\`bash`,
+              `   node scripts/verify-canary.mjs --update`,
+              `   git add .canary-manifest.json && git commit -m "chore(canary): refresh manifest"`,
+              `   \`\`\``,
+              `3. If unintentional → treat as a potential supply-chain incident. Revert the change and investigate.`,
+              ``,
+              `_Workflow run: ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}_`,
+            ].join('\n');
+
+            // De-duplicate: reuse an existing open canary issue if present.
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'canary,security',
+            });
+            const open = existing.data.find(i => i.title.startsWith('[canary]'));
+
+            if (open) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: open.number,
+                body,
+              });
+              core.setFailed(`Canary drift — commented on existing issue #${open.number}`);
+            } else {
+              const created = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['canary', 'security'],
+              });
+              core.setFailed(`Canary drift — opened issue #${created.data.number}`);
+            }
+
+      - name: Fail PR on drift
+        if: steps.verify.outputs.exit_code != '0' && github.event_name == 'pull_request'
+        run: |
+          echo "::error::Canary drift detected. See canary-report.json artifact."
+          exit 1
