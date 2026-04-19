@@ -83,11 +83,18 @@ const QuickAudit = () => {
   const { isAdmin, isCurator } = useRoles();
   const bypass = isAdmin || isCurator;
   const [params] = useSearchParams();
-  const scenarioParam = (params.get("scenario") as ScenarioTag | null) ?? "enterprise_oss";
-  const scenario: ScenarioTag = SCENARIO_GUIDE[scenarioParam] ? scenarioParam : "enterprise_oss";
+  const rawScenario = params.get("scenario");
+  // Accept friendly aliases too (e.g. "healthcare" → "healthcare_codegen")
+  const aliased: ScenarioTag | null =
+    rawScenario === "healthcare" ? "healthcare_codegen"
+    : rawScenario === "founder" ? "general"
+    : rawScenario === "auditor" ? "enterprise_oss"
+    : (rawScenario as ScenarioTag | null);
+  const scenario: ScenarioTag = aliased && SCENARIO_GUIDE[aliased] ? aliased : "enterprise_oss";
   const scenarioInfo = SCENARIO_GUIDE[scenario];
+  const seed = params.get("seed"); // pre-fill key from /demo CTA
 
-  const [code, setCode] = useState(SAMPLE);
+  const [code, setCode] = useState(() => SEEDS[seed ?? ""] ?? SAMPLE);
   const [busy, setBusy] = useState(false);
   const [reviewId, setReviewId] = useState<string | null>(null);
   const [findings, setFindings] = useState<Finding[]>([]);
