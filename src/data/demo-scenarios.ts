@@ -158,7 +158,7 @@ provenance:
         severity: "critical", controlId: "AOS-L1-13" },
       { kind: "handoff", dwell: 2800, personaSlug: "lovelace", handoffSlug: "pacioli",
         title: "Handing to Luca Pacioli", body: "Map to EU AI Act + copyright." },
-      { kind: "agent", dwell: 5200, personaSlug: "pacioli",
+      { kind: "agent", dwell: 6400, personaSlug: "pacioli",
         title: "EU AI Act Art. 53 transparency.",
         body: "Provider must publish a sufficiently detailed summary of training content. Current manifest fails AOS-L1-13 + AOS-L1-15.",
         severity: "high", controlId: "AOS-L1-15" },
