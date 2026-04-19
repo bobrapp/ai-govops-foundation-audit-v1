@@ -82,6 +82,10 @@ const QuickAudit = () => {
   const { user } = useAuth();
   const { isAdmin, isCurator } = useRoles();
   const bypass = isAdmin || isCurator;
+  const [params] = useSearchParams();
+  const scenarioParam = (params.get("scenario") as ScenarioTag | null) ?? "enterprise_oss";
+  const scenario: ScenarioTag = SCENARIO_GUIDE[scenarioParam] ? scenarioParam : "enterprise_oss";
+  const scenarioInfo = SCENARIO_GUIDE[scenario];
 
   const [code, setCode] = useState(SAMPLE);
   const [busy, setBusy] = useState(false);
