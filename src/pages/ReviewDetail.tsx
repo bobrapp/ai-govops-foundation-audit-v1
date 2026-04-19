@@ -242,6 +242,18 @@ const ReviewDetail = () => {
           </div>
         </div>
 
+        {/* Ship-readiness verdict — the headline answer for non-experts.
+            Hidden while pipeline is still running (no findings yet to weigh). */}
+        {!running && findings.length > 0 && (
+          <ShipReadiness findings={findings} className="mb-2" />
+        )}
+
+        {/* Partner referral — always visible after attestation per locked Q3.
+            Lives above the tabs so it can't be missed once the cert is in hand. */}
+        {review.status === "approved" && id && (
+          <PartnerReferralCard reviewId={id} scenarios={review.scenarios ?? []} />
+        )}
+
         <Tabs defaultValue="findings">
           <TabsList>
             <TabsTrigger value="findings">Findings ({findings.length})</TabsTrigger>

@@ -310,11 +310,11 @@ const AgentChat = () => {
                     <Crown className="h-3 w-3" /> Free for all signed-in users
                   </div>
                   <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-[1.05]">
-                    Talk to a <span className="text-aurora font-display italic">Chief Auditor.</span>
+                    Tell a <span className="text-aurora font-display italic">Chief Auditor</span> the problem.
                   </h1>
                   <p className="text-base text-muted-foreground max-w-xl mx-auto leading-relaxed">
-                    Ken Newton or Bob &quot;Fair Witness&quot; Smith will run a brief intake, qualify your
-                    scope, and draft a Review you can take into Quick Audit.
+                    Step 2 of 5. Ken Newton or Bob &quot;Fair Witness&quot; Smith will hear what you're shipping,
+                    qualify the scope, and hand you off to the council. ~2 minutes. No jargon required.
                   </p>
                 </div>
 
