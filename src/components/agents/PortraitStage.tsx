@@ -7,7 +7,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import { Environment, Float } from "@react-three/drei";
 import * as THREE from "three";
-import { portraitFor } from "@/data/agent-personas";
+import { portraitHeroFor, portraitFor } from "@/data/agent-personas";
 
 interface PortraitStageProps {
   speakerSlug: string | null;
@@ -116,7 +116,7 @@ export const PortraitStage = ({
   className,
 }: PortraitStageProps) => {
   const [glError, setGlError] = useState(false);
-  const src = useMemo(() => portraitFor(speakerSlug), [speakerSlug]);
+  const src = useMemo(() => portraitHeroFor(speakerSlug) ?? portraitFor(speakerSlug), [speakerSlug]);
 
   if (!src) {
     return (

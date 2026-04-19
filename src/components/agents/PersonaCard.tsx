@@ -28,11 +28,11 @@ export const PersonaCard = ({ persona }: { persona: PersonaMeta }) => {
     >
       <div className="aspect-square w-full overflow-hidden bg-background">
         <img
-          src={persona.portrait}
+          src={persona.portrait_hero ?? persona.portrait}
           alt={`${persona.display_name} — ${persona.role_title}`}
           loading="lazy"
-          width={1024}
-          height={1024}
+          width={896}
+          height={1200}
           className="h-full w-full object-cover object-top transition-transform duration-700 group-hover:scale-[1.02]"
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />

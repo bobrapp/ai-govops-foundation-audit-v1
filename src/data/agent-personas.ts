@@ -3,16 +3,26 @@
 // This file mirrors the seed for instant render without an extra round-trip
 // and supplies bundled portrait imports.
 
-import kenNewton from "@/assets/agents/ken-newton.jpg";
-import bobSmith from "@/assets/agents/bob-smith.jpg";
-import turing from "@/assets/agents/turing.jpg";
-import kerckhoffs from "@/assets/agents/kerckhoffs.jpg";
-import nightingale from "@/assets/agents/nightingale.jpg";
-import lovelace from "@/assets/agents/lovelace.jpg";
-import hopper from "@/assets/agents/hopper.jpg";
-import pacioli from "@/assets/agents/pacioli.jpg";
-import arendt from "@/assets/agents/arendt.jpg";
-import hamilton from "@/assets/agents/hamilton.jpg";
+import kenNewton from "@/assets/agents/v2/ken-newton-head.png";
+import kenNewtonHero from "@/assets/agents/v2/ken-newton-hero.png";
+import bobSmith from "@/assets/agents/v2/bob-smith-head-v2.png";
+import bobSmithHero from "@/assets/agents/v2/bob-smith-hero.png";
+import turing from "@/assets/agents/v2/turing-head.png";
+import turingHero from "@/assets/agents/v2/turing-hero.png";
+import kerckhoffs from "@/assets/agents/v2/kerckhoffs-head.png";
+import kerckhoffsHero from "@/assets/agents/v2/kerckhoffs-hero.png";
+import nightingale from "@/assets/agents/v2/nightingale-head.png";
+import nightingaleHero from "@/assets/agents/v2/nightingale-hero.png";
+import lovelace from "@/assets/agents/v2/lovelace-head-v2.png";
+import lovelaceHero from "@/assets/agents/v2/lovelace-hero.png";
+import hopper from "@/assets/agents/v2/hopper-head.png";
+import hopperHero from "@/assets/agents/v2/hopper-hero.png";
+import pacioli from "@/assets/agents/v2/pacioli-head.png";
+import pacioliHero from "@/assets/agents/v2/pacioli-hero.png";
+import arendt from "@/assets/agents/v2/arendt-head-v2.png";
+import arendtHero from "@/assets/agents/v2/arendt-hero.png";
+import hamilton from "@/assets/agents/v2/hamilton-head-v2.png";
+import hamiltonHero from "@/assets/agents/v2/hamilton-hero.png";
 
 export type RoleKind =
   | "chief"
@@ -35,6 +45,7 @@ export interface PersonaMeta {
   skills: string[];
   guardrails: string[];
   portrait: string;
+  portrait_hero?: string;
   rank: number;
   is_chief: boolean;
 }
@@ -62,6 +73,7 @@ export const PERSONAS: PersonaMeta[] = [
       "signs_only_after_independence_declaration",
     ],
     portrait: kenNewton,
+    portrait_hero: kenNewtonHero,
     rank: 0,
     is_chief: true,
   },
@@ -88,6 +100,7 @@ export const PERSONAS: PersonaMeta[] = [
       "recuse_when_personally_familiar",
     ],
     portrait: bobSmith,
+    portrait_hero: bobSmithHero,
     rank: 1,
     is_chief: true,
   },
@@ -111,6 +124,7 @@ export const PERSONAS: PersonaMeta[] = [
       "no_silent_re-signing",
     ],
     portrait: turing,
+    portrait_hero: turingHero,
     rank: 10,
     is_chief: false,
   },
@@ -134,6 +148,7 @@ export const PERSONAS: PersonaMeta[] = [
       "no_secrets_in_code",
     ],
     portrait: kerckhoffs,
+    portrait_hero: kerckhoffsHero,
     rank: 20,
     is_chief: false,
   },
@@ -157,6 +172,7 @@ export const PERSONAS: PersonaMeta[] = [
       "no_unsupported_claims",
     ],
     portrait: nightingale,
+    portrait_hero: nightingaleHero,
     rank: 30,
     is_chief: false,
   },
@@ -180,6 +196,7 @@ export const PERSONAS: PersonaMeta[] = [
       "flag_vulnerable_deps",
     ],
     portrait: lovelace,
+    portrait_hero: lovelaceHero,
     rank: 40,
     is_chief: false,
   },
@@ -199,6 +216,7 @@ export const PERSONAS: PersonaMeta[] = [
     ],
     guardrails: ["fail_loud_not_silent", "idempotency_required", "no_blind_retries"],
     portrait: hopper,
+    portrait_hero: hopperHero,
     rank: 50,
     is_chief: false,
   },
@@ -222,6 +240,7 @@ export const PERSONAS: PersonaMeta[] = [
       "no_unbalanced_attestation",
     ],
     portrait: pacioli,
+    portrait_hero: pacioliHero,
     rank: 60,
     is_chief: false,
   },
@@ -245,6 +264,7 @@ export const PERSONAS: PersonaMeta[] = [
       "no_diffusion_of_responsibility",
     ],
     portrait: arendt,
+    portrait_hero: arendtHero,
     rank: 70,
     is_chief: false,
   },
@@ -268,6 +288,7 @@ export const PERSONAS: PersonaMeta[] = [
       "manual_override_must_exist",
     ],
     portrait: hamilton,
+    portrait_hero: hamiltonHero,
     rank: 80,
     is_chief: false,
   },
@@ -278,3 +299,6 @@ export const personaBySlug = (slug: string) =>
 
 export const portraitFor = (slug: string | null | undefined) =>
   slug ? personaBySlug(slug)?.portrait : undefined;
+
+export const portraitHeroFor = (slug: string | null | undefined) =>
+  slug ? personaBySlug(slug)?.portrait_hero : undefined;
