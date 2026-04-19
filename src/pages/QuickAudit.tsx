@@ -282,6 +282,27 @@ const QuickAudit = () => {
                   <Badge className="font-mono text-[10px]">overall score</Badge>
                 </div>
               )}
+
+              {/* Florence Nightingale derived risk-tier badge */}
+              {!busy && derivedTier && (
+                <div className="mt-3 flex items-start gap-3 rounded-lg border border-border bg-background/40 p-3">
+                  <PersonaAvatar slug="nightingale" size="sm" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[10px] font-mono uppercase tracking-wider text-primary/80 flex items-center gap-1">
+                      <Gauge className="h-3 w-3" /> Florence Nightingale · derived tier
+                    </div>
+                    <div className="mt-1 flex items-center gap-2">
+                      <Badge className={`font-mono text-[10px] border ${tierTone[derivedTier]}`}>
+                        {derivedTier}
+                      </Badge>
+                      <span className="text-[11px] text-muted-foreground">
+                        evidence-weighted, independent of any declared tier
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {!busy && reviewId && (
                 <Link to={`/review/${reviewId}`} className="text-xs font-mono text-primary hover:underline mt-3 inline-block">
                   open full review →
@@ -296,6 +317,9 @@ const QuickAudit = () => {
                   <div className="font-semibold">Need a signed AOC?</div>
                   <div className="text-sm text-muted-foreground mt-1">
                     A chartered <Link to="/registry" className="text-primary hover:underline">QAGA assessor</Link> can issue a tamper-evident attestation with hash chain + PDF export.
+                  </div>
+                  <div className="mt-2 text-[11px] font-mono text-muted-foreground">
+                    Co-signed by <NamedCameo slug="ken-newton" size="xs" /> and <NamedCameo slug="bob-smith" size="xs" />.
                   </div>
                 </div>
               </div>
@@ -341,6 +365,7 @@ const QuickAudit = () => {
             </div>
           </section>
         )}
+        </div>
       </div>
     </AppShell>
   );
