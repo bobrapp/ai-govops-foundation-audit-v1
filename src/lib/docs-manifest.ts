@@ -1,4 +1,4 @@
-import { FileText, FileQuestion, FileBadge, Presentation, BookOpen, Image as ImageIcon, AlertTriangle, type LucideIcon } from "lucide-react";
+import { FileText, FileQuestion, FileBadge, Presentation, BookOpen, Image as ImageIcon, AlertTriangle, ShieldCheck, type LucideIcon } from "lucide-react";
 
 export type DocKind = "markdown" | "pdf" | "pptx" | "docx" | "yaml" | "png";
 
@@ -95,6 +95,18 @@ export const DOCS: DocEntry[] = [
     updated: "2026-04-19",
     icon: AlertTriangle,
     route: "/docs/risk-scenarios",
+  },
+  {
+    id: "canary",
+    title: "Canary Manifest",
+    description:
+      "Tamper-evident SHA-256 hashes for every governance-critical file. Verified weekly by GitHub Actions; drift opens a security issue.",
+    kind: "yaml",
+    badge: "JSON",
+    size: "live",
+    updated: "2026-04-19",
+    icon: ShieldCheck,
+    route: "/docs/canary",
   },
 ];
 

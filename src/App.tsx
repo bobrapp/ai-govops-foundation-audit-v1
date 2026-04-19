@@ -21,6 +21,7 @@ import Docs from "./pages/Docs";
 import DocViewer from "./pages/DocViewer";
 import AosSpec from "./pages/AosSpec";
 import RiskScenarios from "./pages/RiskScenarios";
+import Canary from "./pages/Canary";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/docs" element={<Docs />} />
             <Route path="/docs/aos-spec" element={<AosSpec />} />
             <Route path="/docs/risk-scenarios" element={<RiskScenarios />} />
+            <Route path="/docs/canary" element={<Canary />} />
             <Route path="/docs/:slug" element={<DocViewer />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/submit" element={<ProtectedRoute><Submit /></ProtectedRoute>} />
