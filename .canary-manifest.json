@@ -1,18 +1,40 @@
 {
   "$schema": "https://aigovops.foundation/schema/canary-manifest-v1.json",
   "version": 1,
-  "generated_at": "2026-04-19T00:25:57Z",
+  "generated_at": "2026-04-19T00:28:30Z",
   "description": "Tamper-evident SHA-256 manifest for AiGovOps governance-critical files. CI verifies these hashes weekly; any drift opens a GitHub issue.",
   "covers": [
     "supabase/functions/** (edge functions: audit chain, attestation, agent pipeline)",
     "supabase/migrations/** (database schema + RLS policies)",
-    "public/specs/** (machine-readable AOS spec)"
+    "public/specs/** (machine-readable AOS spec)",
+    "src/pages/AosSpec.tsx, AuditLog.tsx, Verify.tsx (user-facing trust surfaces)",
+    "src/lib/docs-manifest.ts (canonical doc index shown to the public)"
   ],
   "files": [
     {
       "path": "public/specs/aos-v1.0.yaml",
       "sha256": "a7215a488e1da2990c3be97605e207606407724aaf403b9022dd5caabf4cb4de",
       "bytes": 7646
+    },
+    {
+      "path": "src/lib/docs-manifest.ts",
+      "sha256": "c7d6383c9226b4daa4e66dfdfc12fe39ac42ce48231ebb42d1b96a7a344664c0",
+      "bytes": 2962
+    },
+    {
+      "path": "src/pages/AosSpec.tsx",
+      "sha256": "f5f92a7cb01e343a5e41898b6221c421b07e71c6219f106ca9f9d684bdb28df5",
+      "bytes": 9175
+    },
+    {
+      "path": "src/pages/AuditLog.tsx",
+      "sha256": "3a5d8a6c0531b6fc51fc4d9745ac5a608b3224f0ea83352fe78ed7c1bde30ccd",
+      "bytes": 2151
+    },
+    {
+      "path": "src/pages/Verify.tsx",
+      "sha256": "6de1a55be8c440edd9f076c1a414eeaa1452fe8f8f9a9106257fcf7c29e2455c",
+      "bytes": 5914
     },
     {
       "path": "supabase/functions/_shared/audit.ts",

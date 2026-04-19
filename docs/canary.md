@@ -7,6 +7,11 @@ materially define how the AiGovOps Review Framework behaves at runtime:
   agent pipeline, verifier).
 - `supabase/migrations/**` — database schema and RLS policies.
 - `public/specs/**` — machine-readable AOS spec.
+- `src/pages/AosSpec.tsx`, `AuditLog.tsx`, `Verify.tsx` — user-facing trust
+  surfaces. If these are tampered with, a viewer could be shown a different
+  AOS spec or a falsified audit chain.
+- `src/lib/docs-manifest.ts` — the canonical doc index served from the public
+  Documentation hub.
 
 If any of these files change without a matching update to the manifest, the
 weekly **Canary Verify** GitHub Action (`.github/workflows/canary-verify.yml`)

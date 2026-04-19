@@ -17,6 +17,10 @@ on:
       - "supabase/functions/**"
       - "supabase/migrations/**"
       - "public/specs/**"
+      - "src/pages/AosSpec.tsx"
+      - "src/pages/AuditLog.tsx"
+      - "src/pages/Verify.tsx"
+      - "src/lib/docs-manifest.ts"
       - ".canary-manifest.json"
       - "scripts/verify-canary.mjs"
 
