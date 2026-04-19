@@ -1,12 +1,39 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ShieldCheck, ShieldX, Loader2, ExternalLink } from "lucide-react";
+import { ShieldCheck, ShieldX, Loader2, ExternalLink, Download, Sparkles, CheckCircle2, XCircle, Anchor } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PublicShell } from "@/components/PublicShell";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { EDGE_BASE } from "@/lib/config";
+
+interface CertOut {
+  id: string;
+  determination: string;
+  organization: string;
+  scope_statement: string;
+  aos_version: string;
+  scenarios: string[];
+  trigger_kind: string;
+  signature_kind: string;
+  ken_signature: string | null;
+  bob_signature: string | null;
+  audit_prev_hash: string | null;
+  audit_entry_hash: string | null;
+  manifest_entries: number;
+  issued_at: string;
+  pdf_url: string | null;
+  pdf_sha256_stored: string | null;
+  pdf_sha256_live: string | null;
+  pdf_hash_ok: boolean;
+  anchor_ok: boolean;
+}
+
+const determinationTone = (d: string) =>
+  d === "pass" ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+  : d === "pass_with_compensations" ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
+  : "bg-destructive/15 text-destructive border-destructive/30";
 
 const Verify = () => {
   const { reviewId } = useParams();
@@ -15,7 +42,7 @@ const Verify = () => {
 
   usePageMeta({
     title: `Verify chain · ${reviewId?.slice(0, 8) ?? ""}`,
-    description: "Public HMAC-SHA256 verification of the audit chain for an AiGovOps review.",
+    description: "Public HMAC-SHA256 verification of the audit chain and co-signed compliance certifications for an AiGovOps review.",
     canonical: `/verify/${reviewId ?? ""}`,
   });
 
@@ -41,7 +68,7 @@ const Verify = () => {
         </Link>
       }
     >
-      <main className="max-w-3xl mx-auto px-6 py-10">
+      <main className="max-w-3xl mx-auto px-6 py-10 space-y-6">
         <PageHeader
           eyebrow={`review: ${reviewId}`}
           title="Audit Chain Verification"
@@ -73,15 +100,99 @@ const Verify = () => {
               </div>
             </div>
 
+            {/* ---------- Compliance certifications (Ken + Bob co-signed) ---------- */}
+            {data.certifications?.length > 0 && (
+              <section className="space-y-3">
+                <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                  <Sparkles className="h-3.5 w-3.5" /> Compliance certifications · Ken &amp; Bob
+                </h2>
+                {data.certifications.map((c: CertOut) => (
+                  <div key={c.id} className="rounded-lg border border-border bg-card-grad p-5 space-y-4">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="outline" className={determinationTone(c.determination)}>
+                          {c.determination.replace(/_/g, " ")}
+                        </Badge>
+                        <Badge variant="outline" className="font-mono text-[10px]">{c.trigger_kind}</Badge>
+                        <Badge variant="outline" className="font-mono text-[10px]">{c.signature_kind}</Badge>
+                        <span className="text-xs text-muted-foreground">{new Date(c.issued_at).toLocaleString()}</span>
+                      </div>
+                      {c.pdf_url && (
+                        <Button asChild variant="outline" size="sm">
+                          <a href={c.pdf_url} target="_blank" rel="noreferrer">
+                            <Download className="h-4 w-4 mr-1.5" />PDF
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+
+                    <dl className="grid grid-cols-[140px_1fr] gap-y-1.5 text-sm">
+                      <dt className="text-muted-foreground">Organization</dt><dd>{c.organization}</dd>
+                      <dt className="text-muted-foreground">Scope</dt><dd>{c.scope_statement}</dd>
+                      <dt className="text-muted-foreground">AOS Version</dt><dd className="font-mono text-xs">{c.aos_version}</dd>
+                      <dt className="text-muted-foreground">Scenarios</dt><dd className="font-mono text-xs">{(c.scenarios ?? []).join(", ") || "general"}</dd>
+                      <dt className="text-muted-foreground">Manifest</dt><dd className="font-mono text-xs">{c.manifest_entries} audit row{c.manifest_entries === 1 ? "" : "s"}</dd>
+                    </dl>
+
+                    {/* Integrity checks */}
+                    <div className="rounded-md border border-border/60 bg-muted/30 p-3 space-y-2">
+                      <div className="flex items-center gap-2 text-xs">
+                        {c.pdf_hash_ok ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <XCircle className="h-4 w-4 text-destructive" />}
+                        <span className="font-medium">PDF SHA-256 integrity</span>
+                        <span className="text-muted-foreground">
+                          {c.pdf_hash_ok ? "stored hash matches live PDF bytes" : c.pdf_sha256_live ? "MISMATCH — file may have been replaced" : "could not fetch live PDF"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs">
+                        {c.anchor_ok ? <CheckCircle2 className="h-4 w-4 text-primary" /> : <XCircle className="h-4 w-4 text-destructive" />}
+                        <span className="font-medium flex items-center gap-1"><Anchor className="h-3 w-3" /> Audit anchor</span>
+                        <span className="text-muted-foreground">
+                          {c.anchor_ok ? "entry_hash present in live chain" : "anchor row missing from chain"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Co-signatures */}
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      <div className="rounded-md border border-border/60 p-3 space-y-1">
+                        <div className="text-xs font-medium">Ken &quot;The Chief&quot; Newton</div>
+                        <div className="text-[10px] text-muted-foreground">Chief AIgovops Auditor</div>
+                        <div className="font-mono text-[10px] break-all text-muted-foreground pt-1">
+                          sig: {c.ken_signature ?? "—"}
+                        </div>
+                      </div>
+                      <div className="rounded-md border border-border/60 p-3 space-y-1">
+                        <div className="text-xs font-medium">Bob &quot;Fair Witness&quot; Smith</div>
+                        <div className="text-[10px] text-muted-foreground">Co-Chief Fair Witness Auditor</div>
+                        <div className="font-mono text-[10px] break-all text-muted-foreground pt-1">
+                          sig: {c.bob_signature ?? "—"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1 text-[10px] font-mono text-muted-foreground break-all">
+                      <div>pdf sha256 (stored): {c.pdf_sha256_stored ?? "—"}</div>
+                      {c.pdf_sha256_live && <div>pdf sha256 (live):   {c.pdf_sha256_live}</div>}
+                      <div>audit prev:  {c.audit_prev_hash ?? "—"}</div>
+                      <div>audit entry: {c.audit_entry_hash ?? "—"}</div>
+                    </div>
+
+                    <p className="text-[10px] text-muted-foreground italic">
+                      Demonstration HMAC-SHA256 co-signatures · Ed25519 upgrade pending.
+                    </p>
+                  </div>
+                ))}
+              </section>
+            )}
+
+            {/* ---------- Formal QAGA Attestation (if any) ---------- */}
             {data.attestation && (
-              <div className="mt-6 rounded-lg border border-border bg-card-grad p-5">
+              <div className="rounded-lg border border-border bg-card-grad p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="text-sm font-medium">Attestation of AOS Conformance</div>
-                  <Badge className={
-                    data.attestation.determination === "pass" ? "bg-primary/20 text-primary"
-                    : data.attestation.determination === "pass_with_compensations" ? "bg-warning/20 text-warning"
-                    : "bg-destructive/20 text-destructive"
-                  }>{data.attestation.determination.replace(/_/g, " ")}</Badge>
+                  <div className="text-sm font-medium">Attestation of AOS Conformance · QAGA</div>
+                  <Badge variant="outline" className={determinationTone(data.attestation.determination)}>
+                    {data.attestation.determination.replace(/_/g, " ")}
+                  </Badge>
                 </div>
                 <dl className="grid grid-cols-[140px_1fr] gap-y-1.5 text-sm">
                   <dt className="text-muted-foreground">Organization</dt><dd>{data.attestation.organization}</dd>
@@ -96,16 +207,24 @@ const Verify = () => {
               </div>
             )}
 
-            <div className="mt-6 rounded-lg border border-border bg-card-grad divide-y divide-border">
-              {data.results.map((r: any, i: number) => (
-                <div key={r.id} className="px-4 py-2 text-sm flex items-center gap-3">
-                  <span className="text-xs font-mono text-muted-foreground w-6">{i + 1}</span>
-                  <span className="font-mono text-xs flex-1 text-primary">{r.event}</span>
-                  {r.ok ? <span className="text-[10px] font-mono text-primary">✓ valid</span>
-                       : <span className="text-[10px] font-mono text-destructive">✗ {r.reason}</span>}
-                </div>
-              ))}
-            </div>
+            {/* ---------- Per-entry chain ---------- */}
+            <section>
+              <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-2">Audit chain</h2>
+              <div className="rounded-lg border border-border bg-card-grad divide-y divide-border">
+                {data.results.map((r: any, i: number) => (
+                  <div key={r.id} className="px-4 py-2 text-sm flex items-center gap-3">
+                    <span className="text-xs font-mono text-muted-foreground w-6">{i + 1}</span>
+                    <span className="font-mono text-xs flex-1 text-primary">{r.event}</span>
+                    <span className="text-[10px] font-mono text-muted-foreground">{r.actor_kind}</span>
+                    {r.ok ? <span className="text-[10px] font-mono text-primary">✓ valid</span>
+                         : <span className="text-[10px] font-mono text-destructive">✗ {r.reason}</span>}
+                  </div>
+                ))}
+                {data.results.length === 0 && (
+                  <div className="px-4 py-6 text-sm text-muted-foreground text-center">No audit entries.</div>
+                )}
+              </div>
+            </section>
           </>
         )}
       </main>
