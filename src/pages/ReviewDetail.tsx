@@ -45,6 +45,7 @@ const ReviewDetail = () => {
   const [busy, setBusy] = useState(false);
   const [chain, setChain] = useState<{ ok: boolean; count: number; results?: Array<{ ok: boolean; reason?: string }> } | null>(null);
   const [verifying, setVerifying] = useState(false);
+  const [activeSlug, setActiveSlug] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!id) return;
