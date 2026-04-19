@@ -169,7 +169,7 @@ const Admin = () => {
             </Button>
             <Button variant="outline" size="sm" onClick={backfillPdfs} disabled={backfilling || seeding || unseeding}>
               {backfilling ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileSignature className="h-4 w-4 mr-2" />}
-              Generate signed PDFs
+              Backfill Aurora PDFs
             </Button>
             <Button variant="outline" size="sm" onClick={unseedDemo} disabled={seeding || unseeding || backfilling} className="text-destructive hover:text-destructive">
               {unseeding ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
