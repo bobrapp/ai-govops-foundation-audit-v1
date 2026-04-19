@@ -124,7 +124,7 @@ const Landing = () => {
                 <div className="grid grid-cols-4 gap-y-3 gap-x-2 flex-1 content-end">
                   {["turing", "kerckhoffs", "nightingale", "lovelace", "hopper", "pacioli", "arendt", "hamilton"].map((slug) => {
                     const p = personaBySlug(slug);
-                    const shortName = p?.display_name.replace(/"[^"]+"\s?/g, "").split(" ").slice(-1)[0] ?? slug;
+                    const roleLabel = p?.role_kind ?? slug;
                     return (
                       <Link
                         key={slug}
