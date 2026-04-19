@@ -1,4 +1,4 @@
-import { FileText, FileQuestion, FileBadge, Presentation, BookOpen, Image as ImageIcon, AlertTriangle, ShieldCheck, Wrench, type LucideIcon } from "lucide-react";
+import { FileText, FileQuestion, FileBadge, Presentation, BookOpen, Image as ImageIcon, AlertTriangle, ShieldCheck, Wrench, BookA, type LucideIcon } from "lucide-react";
 
 export type DocKind = "markdown" | "pdf" | "pptx" | "docx" | "yaml" | "png";
 
@@ -107,6 +107,18 @@ export const DOCS: DocEntry[] = [
     updated: "2026-04-19",
     icon: ShieldCheck,
     route: "/docs/canary",
+  },
+  {
+    id: "vocabulary",
+    title: "Vocabulary",
+    description:
+      "Comprehensive glossary — framework terms, regulations, standards, audit-process concepts, and AI governance terminology. Every entry links to a verifiable source.",
+    kind: "markdown",
+    badge: "REF",
+    size: "live",
+    updated: "2026-04-19",
+    icon: BookA,
+    route: "/docs/vocabulary",
   },
   {
     id: "operations",
