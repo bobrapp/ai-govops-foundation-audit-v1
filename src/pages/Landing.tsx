@@ -103,7 +103,7 @@ const Landing = () => {
                     <Zap className="h-3.5 w-3.5 mr-1.5" /> Skip intake — run audit
                   </Button>
                 </Link>
-                <Link to="/demo/enterprise_oss">
+                <Link to="/demo/healthcare_insurance">
                   <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-foreground">
                     <Play className="h-3.5 w-3.5 mr-1.5" /> Watch 90-sec demo
                   </Button>
@@ -219,11 +219,11 @@ const Landing = () => {
             body="Sign in, paste code, get findings in ~20 sec."
           />
           <EntryCard
-            to="/demo/enterprise_oss"
+            to="/demo/healthcare_insurance"
             icon={Play}
             tone="secondary"
             title="Watch the 90-sec demo"
-            body="See agents hand off live, no login needed."
+            body="Healthcare AI prior-auth, end-to-end. No login."
           />
           <EntryCard
             to="/registry"

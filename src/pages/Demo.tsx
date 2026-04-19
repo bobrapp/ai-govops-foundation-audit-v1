@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Pause, Play, RotateCcw, ArrowRight, Crown, Stamp, ChevronLeft, ArrowLeft, ArrowRight as ArrowRightIcon,
+  Pause, Play, RotateCcw, ArrowRight, Crown, Stamp, ChevronLeft, ArrowLeft, ArrowRight as ArrowRightIcon, MousePointerClick,
 } from "lucide-react";
 import { DEMOS, demoBySlug, type DemoBeat } from "@/data/demo-scenarios";
 import { portraitFor, personaBySlug } from "@/data/agent-personas";
@@ -20,7 +20,7 @@ const sevTone: Record<string, string> = {
 const Demo = () => {
   const { scenario } = useParams<{ scenario?: string }>();
   const nav = useNavigate();
-  const demo = useMemo(() => demoBySlug(scenario ?? "enterprise_oss") ?? DEMOS[0], [scenario]);
+  const demo = useMemo(() => demoBySlug(scenario ?? "healthcare_insurance") ?? DEMOS[0], [scenario]);
 
   usePageMeta({
     title: `${demo.label} — animated audit demo`,
@@ -97,16 +97,18 @@ const Demo = () => {
       </header>
 
       {/* Scene */}
-      <main className="flex-1 grid place-items-center px-6 py-10 overflow-hidden">
-        <div key={idx} className="w-full max-w-5xl animate-fade-in">
+      <main className="flex-1 grid place-items-center px-6 py-8 overflow-hidden">
+        <div key={idx} className="w-full max-w-5xl animate-fade-in space-y-6">
+          {beat?.step && <StepBanner beat={beat} />}
           {beat && <Scene beat={beat} />}
         </div>
       </main>
 
       {/* Progress + meta */}
       <footer className="border-t border-border px-6 py-3 flex items-center justify-between gap-4">
-        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+        <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground truncate">
           {demo.label} · {idx + 1} / {total}
+          {beat?.stepLabel && <span className="text-primary"> · Step {beat.step}: {beat.stepLabel}</span>}
         </div>
         <div className="flex-1 mx-4 h-1 rounded bg-border overflow-hidden">
           <div
@@ -118,6 +120,30 @@ const Demo = () => {
           <Button size="sm" variant="secondary">Run a real audit <ArrowRight className="h-4 w-4 ml-1.5" /></Button>
         </Link>
       </footer>
+    </div>
+  );
+};
+
+/** Big numbered banner shown above the scene whenever the beat marks a customer-journey step. */
+const StepBanner = ({ beat }: { beat: DemoBeat }) => {
+  return (
+    <div className="rounded-2xl border-2 border-primary/40 bg-primary/5 shadow-glow px-6 py-4 flex items-center gap-5">
+      <div className="shrink-0 h-16 w-16 md:h-20 md:w-20 rounded-2xl bg-primary text-primary-foreground grid place-items-center shadow-elev">
+        <span className="text-3xl md:text-4xl font-bold tabular-nums">{beat.step}</span>
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-primary/80">
+          Step {beat.step} of 5 · {beat.stepLabel}
+        </div>
+        {beat.youDo && (
+          <div className="mt-1 flex items-start gap-2">
+            <MousePointerClick className="h-5 w-5 md:h-6 md:w-6 text-primary mt-0.5 shrink-0" />
+            <p className="text-xl md:text-3xl font-semibold tracking-tight leading-tight">
+              {beat.youDo}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
