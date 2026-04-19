@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AppShell } from "@/components/AppShell";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -11,8 +11,9 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, MessagesSquare, Plus, Send, Trash2, Users, ArrowRight, Crown } from "lucide-react";
+import { Loader2, MessagesSquare, Plus, Send, Trash2, Users, ArrowRight, Crown, Sparkles, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { usePersonas } from "@/hooks/queries/useAgents";
@@ -23,13 +24,18 @@ import { portraitFor } from "@/data/agent-personas";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
+import { PortraitStage } from "@/components/agents/PortraitStage";
+
+type Scenario = "enterprise_oss" | "healthcare_codegen" | "generative_ip" | "hr_behavior" | "general";
 
 const AgentChat = () => {
   usePageMeta({
     title: "Agent Chat — talk to the AIgovops Council",
     description:
-      "Open a 1:1 thread with any AIgovops auditor agent or convene a council. Ken 'The Chief' moderates and routes turns.",
+      "Open a free intake with Ken or Bob, our chief auditors. Curators, reviewers, and admins can also convene the full council.",
   });
+  const nav = useNavigate();
+  const { user } = useAuth();
   const { canChat, loading: rolesLoading } = useRoles();
   const personasQ = usePersonas();
   const threadsQ = useThreads();
@@ -45,9 +51,11 @@ const AgentChat = () => {
 
   const [draft, setDraft] = useState("");
   const [openNew, setOpenNew] = useState(false);
-  const [newKind, setNewKind] = useState<"1on1" | "council">("1on1");
+  // Default to intake — that's what's open to everyone.
+  const [newKind, setNewKind] = useState<"intake" | "1on1" | "council">("intake");
   const [newTitle, setNewTitle] = useState("");
   const [newPicked, setNewPicked] = useState<string[]>([]);
+  const [activeSpeakerSlug, setActiveSpeakerSlug] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Realtime: refresh messages on insert
@@ -58,7 +66,7 @@ const AgentChat = () => {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "agent_messages", filter: `thread_id=eq.${activeId}` },
-        () => qc.invalidateQueries({ queryKey: ["agent_messages", activeId] })
+        () => qc.invalidateQueries({ queryKey: ["agent_messages", activeId] }),
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
@@ -81,14 +89,67 @@ const AgentChat = () => {
   );
   const activeThread = threads.find((t) => t.id === activeId);
 
+  // Track active speaker (last agent message) for the 3D stage
+  useEffect(() => {
+    if (!messagesQ.data?.length) return;
+    const lastAgent = [...messagesQ.data].reverse().find((m) => m.role === "agent" && m.persona_id);
+    if (lastAgent && lastAgent.persona_id) {
+      const p = personaIndex[lastAgent.persona_id];
+      if (p?.slug) setActiveSpeakerSlug(p.slug);
+    } else if (activeThread) {
+      // No agent reply yet — default to first persona on thread
+      const head = personaIndex[(activeThread.persona_ids ?? [])[0]];
+      if (head?.slug) setActiveSpeakerSlug(head.slug);
+    }
+  }, [messagesQ.data, personaIndex, activeThread]);
+
   const togglePicked = (id: string) =>
     setNewPicked((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
 
+  // Quick start an intake thread with both Ken + Bob
+  const startIntakeWithChiefs = async () => {
+    const chiefs = personas.filter((p) => p.is_chief);
+    if (!chiefs.length) return toast.error("Chief auditors not loaded yet.");
+    try {
+      const t = await createThread.mutateAsync({
+        kind: "intake",
+        personaIds: chiefs.map((p) => p.id),
+        title: "Intake — Ken & Bob",
+      });
+      setActiveId(t.id);
+      // Seed first agent question
+      await sendMessage.mutateAsync({
+        threadId: t.id,
+        userMessage: "Hi — I'd like to qualify a system for an AIgovops audit. Can you walk me through what you need?",
+      });
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Failed to start intake");
+    }
+  };
+
   const startThread = async () => {
+    if (newKind === "intake") {
+      // Force chiefs only
+      const chiefs = personas.filter((p) => p.is_chief);
+      if (!chiefs.length) return toast.error("Chief auditors not loaded yet.");
+      try {
+        const t = await createThread.mutateAsync({
+          kind: "intake",
+          personaIds: chiefs.map((p) => p.id),
+          title: newTitle.trim() || "Intake — Ken & Bob",
+        });
+        setActiveId(t.id);
+        setOpenNew(false);
+        setNewTitle("");
+        return;
+      } catch (e: unknown) {
+        toast.error(e instanceof Error ? e.message : "Failed to start thread");
+        return;
+      }
+    }
     if (!newPicked.length) return toast.error("Pick at least one agent.");
     if (newKind === "1on1" && newPicked.length !== 1) return toast.error("1:1 mode = exactly one agent.");
     try {
-      // For council, ensure Ken is included to moderate
       let ids = newPicked;
       if (newKind === "council") {
         const ken = personas.find((p) => p.is_chief);
@@ -110,12 +171,45 @@ const AgentChat = () => {
     }
   };
 
+  // Materialise an intake into a draft Review and route to /quick-audit
+  const materialiseIntake = async (
+    threadId: string,
+    scope: NonNullable<Awaited<ReturnType<typeof sendMessage.mutateAsync>>["scope"]>,
+  ) => {
+    if (!user) return;
+    try {
+      const scenario = (["enterprise_oss", "healthcare_codegen", "generative_ip", "hr_behavior", "general"]
+        .includes(scope.scenario ?? "") ? scope.scenario : "general") as Scenario;
+      const { data: review, error } = await supabase
+        .from("reviews")
+        .insert({
+          submitter_id: user.id,
+          title: `Intake — ${scope.organization ?? "(unnamed)"} · ${scenario}`,
+          description: scope.scope_statement ?? "Drafted from intake conversation.",
+          source_type: "paste",
+          scenarios: [scenario],
+          status: "draft",
+          from_thread_id: threadId,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      toast.success("Intake qualified — Review drafted. Continuing to Quick Audit.");
+      nav(`/quick-audit?review=${review.id}`);
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Could not draft Review");
+    }
+  };
+
   const send = async () => {
     if (!activeId || !draft.trim()) return;
     const text = draft.trim();
     setDraft("");
     try {
-      await sendMessage.mutateAsync({ threadId: activeId, userMessage: text });
+      const res = await sendMessage.mutateAsync({ threadId: activeId, userMessage: text });
+      if (res.qualified && res.scope && activeThread?.kind === "intake") {
+        await materialiseIntake(activeId, res.scope);
+      }
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "Send failed");
     }
@@ -129,35 +223,28 @@ const AgentChat = () => {
     );
   }
 
-  if (!canChat) {
-    return (
-      <AppShell>
-        <div className="p-8 max-w-3xl mx-auto">
-          <PageHeader
-            eyebrow="Restricted"
-            title="Agent Chat is for curators, reviewers, and admins"
-            description="Ask an admin to grant you the curator role to start chatting with the council."
-          />
-          <Link to="/agents"><Button variant="secondary"><Users className="h-4 w-4 mr-1.5" /> View the council roster</Button></Link>
-        </div>
-      </AppShell>
-    );
-  }
+  const activeSpeaker = activeSpeakerSlug
+    ? personas.find((p) => p.slug === activeSpeakerSlug)
+    : null;
 
   return (
     <AppShell>
       <div className="flex h-[calc(100vh-0px)]">
         {/* Thread list */}
         <aside className="w-72 border-r border-border bg-sidebar flex flex-col">
-          <header className="p-3 border-b border-border flex items-center gap-2">
-            <Button size="sm" className="flex-1" onClick={() => setOpenNew(true)}>
-              <Plus className="h-4 w-4 mr-1.5" /> New chat
+          <header className="p-3 border-b border-border space-y-2">
+            <Button size="sm" className="w-full" onClick={startIntakeWithChiefs} disabled={createThread.isPending}>
+              <Sparkles className="h-4 w-4 mr-1.5" /> Start free intake
+            </Button>
+            <Button size="sm" variant="outline" className="w-full" onClick={() => setOpenNew(true)}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              {canChat ? "New chat (council)" : "New intake"}
             </Button>
           </header>
           <ScrollArea className="flex-1">
             {threads.length === 0 && (
               <div className="p-4 text-xs font-mono text-muted-foreground">
-                No threads yet — start one with the council.
+                No threads yet — click <strong>Start free intake</strong> to talk to Ken & Bob.
               </div>
             )}
             {threads.map((t) => {
@@ -177,9 +264,14 @@ const AgentChat = () => {
                       <img src={portraitFor(head.slug)} alt="" loading="lazy" className="h-7 w-7 rounded object-cover object-top" />
                     )}
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium truncate">{t.title}</div>
+                      <div className="text-sm font-medium truncate flex items-center gap-1.5">
+                        {t.title}
+                        {t.intake_qualified_at && <ShieldCheck className="h-3 w-3 text-primary shrink-0" />}
+                      </div>
                       <div className="text-[10px] font-mono text-muted-foreground flex items-center gap-1">
-                        {t.kind === "council" ? <><Users className="h-3 w-3" /> council</> : <>1:1</>}
+                        {t.kind === "council" ? <><Users className="h-3 w-3" /> council</>
+                          : t.kind === "intake" ? <><Sparkles className="h-3 w-3" /> intake</>
+                          : <>1:1</>}
                         <span>· {formatDistanceToNow(new Date(t.updated_at), { addSuffix: true })}</span>
                       </div>
                     </div>
@@ -193,40 +285,67 @@ const AgentChat = () => {
         {/* Conversation */}
         <main className="flex-1 flex flex-col bg-background">
           {!activeThread ? (
-            <div className="flex-1 grid place-items-center text-sm text-muted-foreground font-mono">
-              Pick a thread or start a new one.
+            <div className="flex-1 grid place-items-center text-center px-6">
+              <div className="max-w-md space-y-3">
+                <PageHeader
+                  eyebrow="Free for all signed-in users"
+                  title="Talk to a Chief Auditor"
+                  description="Ken Newton or Bob 'Fair Witness' Smith will run a brief intake, qualify your scope, and draft a Review you can take into Quick Audit."
+                />
+                <Button onClick={startIntakeWithChiefs} disabled={createThread.isPending}>
+                  {createThread.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
+                  Start free intake with Ken & Bob
+                </Button>
+                {!canChat && (
+                  <div className="text-xs font-mono text-muted-foreground pt-2">
+                    Full council chat (1:1 with any agent or Council mode) requires the curator role.{" "}
+                    <Link to="/agents" className="text-primary hover:underline">View the council →</Link>
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             <>
-              <header className="p-4 border-b border-border flex items-center justify-between">
-                <div>
-                  <div className="text-[10px] font-mono uppercase tracking-wider text-primary/80">
-                    {activeThread.kind === "council" ? "Council session" : "1-on-1"}
+              <header className="border-b border-border">
+                {/* 3D portrait stage */}
+                <PortraitStage
+                  speakerSlug={activeSpeakerSlug}
+                  speakerName={activeSpeaker?.display_name}
+                  isChief={!!activeSpeaker?.is_chief}
+                  className="h-56 w-full"
+                />
+                <div className="p-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-mono uppercase tracking-wider text-primary/80">
+                      {activeThread.kind === "council" ? "Council session"
+                        : activeThread.kind === "intake" ? "Intake conversation"
+                        : "1-on-1"}
+                    </div>
+                    <h2 className="font-semibold truncate">{activeThread.title}</h2>
                   </div>
-                  <h2 className="font-semibold">{activeThread.title}</h2>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  {(activeThread.persona_ids ?? []).map((pid) => {
-                    const p = personaIndex[pid];
-                    if (!p) return null;
-                    return (
-                      <img
-                        key={pid} src={portraitFor(p.slug)} alt={p.display_name}
-                        title={p.display_name}
-                        className={`h-8 w-8 rounded object-cover object-top border ${p.is_chief ? "border-warning" : "border-border"}`}
-                      />
-                    );
-                  })}
-                  <Button
-                    variant="ghost" size="icon"
-                    onClick={async () => {
-                      if (!activeId) return;
-                      await deleteThread.mutateAsync(activeId);
-                      setActiveId(null);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {(activeThread.persona_ids ?? []).map((pid) => {
+                      const p = personaIndex[pid];
+                      if (!p) return null;
+                      return (
+                        <img
+                          key={pid} src={portraitFor(p.slug)} alt={p.display_name}
+                          title={p.display_name}
+                          className={`h-8 w-8 rounded object-cover object-top border ${p.is_chief ? "border-warning" : "border-border"}`}
+                        />
+                      );
+                    })}
+                    <Button
+                      variant="ghost" size="icon"
+                      onClick={async () => {
+                        if (!activeId) return;
+                        await deleteThread.mutateAsync(activeId);
+                        setActiveId(null);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </header>
 
@@ -293,7 +412,15 @@ const AgentChat = () => {
                 })}
                 {sendMessage.isPending && (
                   <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> council is thinking…
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    {activeThread.kind === "intake" ? "chief auditor is replying…" : "council is thinking…"}
+                  </div>
+                )}
+                {activeThread.intake_qualified_at && (
+                  <div className="rounded-md border border-primary/40 bg-primary/5 p-3 text-xs font-mono">
+                    <ShieldCheck className="h-4 w-4 text-primary inline mr-1.5" />
+                    Intake qualified · Review drafted. Head to{" "}
+                    <Link to="/quick-audit" className="text-primary hover:underline">Quick Audit</Link> to run it.
                   </div>
                 )}
               </div>
@@ -303,7 +430,11 @@ const AgentChat = () => {
                   <Textarea
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
-                    placeholder="Ask the council anything — policy, controls, risk, evidence…"
+                    placeholder={
+                      activeThread.kind === "intake"
+                        ? "Tell the chief auditor about your system, scope, and evidence…"
+                        : "Ask the council anything — policy, controls, risk, evidence…"
+                    }
                     rows={2}
                     className="resize-none"
                     onKeyDown={(e) => {
@@ -329,14 +460,16 @@ const AgentChat = () => {
           <DialogHeader>
             <DialogTitle>Start a new chat</DialogTitle>
             <DialogDescription>
-              Pick a mode and the agents you want at the table. In Council mode, Ken moderates and routes turns.
+              <strong>Intake</strong> is free for everyone — Ken & Bob qualify your audit.
+              {canChat && <> <strong>1-on-1</strong> and <strong>Council</strong> are open to curators, reviewers, and admins.</>}
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs value={newKind} onValueChange={(v) => { setNewKind(v as "1on1" | "council"); setNewPicked([]); }}>
-            <TabsList className="grid grid-cols-2">
-              <TabsTrigger value="1on1"><MessagesSquare className="h-4 w-4 mr-1.5" /> 1-on-1</TabsTrigger>
-              <TabsTrigger value="council"><Users className="h-4 w-4 mr-1.5" /> Council</TabsTrigger>
+          <Tabs value={newKind} onValueChange={(v) => { setNewKind(v as typeof newKind); setNewPicked([]); }}>
+            <TabsList className={`grid ${canChat ? "grid-cols-3" : "grid-cols-1"}`}>
+              <TabsTrigger value="intake"><Sparkles className="h-4 w-4 mr-1.5" /> Intake (Ken & Bob)</TabsTrigger>
+              {canChat && <TabsTrigger value="1on1"><MessagesSquare className="h-4 w-4 mr-1.5" /> 1-on-1</TabsTrigger>}
+              {canChat && <TabsTrigger value="council"><Users className="h-4 w-4 mr-1.5" /> Council</TabsTrigger>}
             </TabsList>
           </Tabs>
 
@@ -347,32 +480,38 @@ const AgentChat = () => {
               placeholder="Thread title (optional)"
               className="mb-3"
             />
-            <div className="grid grid-cols-3 gap-2 max-h-[260px] overflow-auto">
-              {personas.map((p) => {
-                const picked = newPicked.includes(p.id);
-                return (
-                  <button
-                    key={p.id}
-                    onClick={() => {
-                      if (newKind === "1on1") setNewPicked([p.id]);
-                      else togglePicked(p.id);
-                    }}
-                    className={`flex items-center gap-2 rounded-md p-2 border transition-colors ${
-                      picked ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
-                    }`}
-                  >
-                    {portraitFor(p.slug) && (
-                      <img src={portraitFor(p.slug)} alt="" className="h-8 w-8 rounded object-cover object-top" />
-                    )}
-                    <div className="text-left min-w-0">
-                      <div className="text-xs font-medium truncate">{p.display_name}</div>
-                      <div className="text-[10px] font-mono text-muted-foreground truncate">{p.role_title}</div>
-                    </div>
-                    {p.is_chief && <Badge className="bg-warning/15 text-warning border-warning/30 ml-auto font-mono text-[9px]">Chief</Badge>}
-                  </button>
-                );
-              })}
-            </div>
+            {newKind === "intake" ? (
+              <div className="rounded-md border border-border bg-card-grad p-3 text-xs font-mono text-muted-foreground">
+                Intake threads include both chief auditors automatically. Ken (orchestration) and Bob (fair witness) will run a structured qualification together.
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-2 max-h-[260px] overflow-auto">
+                {personas.map((p) => {
+                  const picked = newPicked.includes(p.id);
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => {
+                        if (newKind === "1on1") setNewPicked([p.id]);
+                        else togglePicked(p.id);
+                      }}
+                      className={`flex items-center gap-2 rounded-md p-2 border transition-colors ${
+                        picked ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                      }`}
+                    >
+                      {portraitFor(p.slug) && (
+                        <img src={portraitFor(p.slug)} alt="" className="h-8 w-8 rounded object-cover object-top" />
+                      )}
+                      <div className="text-left min-w-0">
+                        <div className="text-xs font-medium truncate">{p.display_name}</div>
+                        <div className="text-[10px] font-mono text-muted-foreground truncate">{p.role_title}</div>
+                      </div>
+                      {p.is_chief && <Badge className="bg-warning/15 text-warning border-warning/30 ml-auto font-mono text-[9px]">Chief</Badge>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             {newKind === "council" && (
               <div className="text-[11px] font-mono text-muted-foreground mt-2">
                 Ken "The Chief" is added automatically to moderate.
@@ -382,7 +521,10 @@ const AgentChat = () => {
 
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpenNew(false)}>Cancel</Button>
-            <Button onClick={startThread} disabled={createThread.isPending || newPicked.length === 0}>
+            <Button
+              onClick={startThread}
+              disabled={createThread.isPending || (newKind !== "intake" && newPicked.length === 0)}
+            >
               {createThread.isPending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Starting…</> : "Start chat"}
             </Button>
           </DialogFooter>
