@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_decisions: {
+        Row: {
+          action: string
+          created_at: string
+          decision: string
+          evidence: Json
+          id: string
+          needs_human: boolean
+          persona_id: string
+          rationale: string
+          review_id: string | null
+          severity: Database["public"]["Enums"]["severity"]
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          decision: string
+          evidence?: Json
+          id?: string
+          needs_human?: boolean
+          persona_id: string
+          rationale: string
+          review_id?: string | null
+          severity?: Database["public"]["Enums"]["severity"]
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          decision?: string
+          evidence?: Json
+          id?: string
+          needs_human?: boolean
+          persona_id?: string
+          rationale?: string
+          review_id?: string | null
+          severity?: Database["public"]["Enums"]["severity"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_decisions_persona_id_fkey"
+            columns: ["persona_id"]
+            isOneToOne: false
+            referencedRelation: "agent_personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_decisions_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_findings: {
         Row: {
           agent_name: string
@@ -72,6 +126,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      agent_personas: {
+        Row: {
+          active: boolean
+          created_at: string
+          display_name: string
+          guardrails: string[]
+          historical_era: string | null
+          id: string
+          is_chief: boolean
+          portrait_path: string | null
+          rank: number
+          role_kind: string
+          role_title: string
+          short_bio: string
+          skills: string[]
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          display_name: string
+          guardrails?: string[]
+          historical_era?: string | null
+          id?: string
+          is_chief?: boolean
+          portrait_path?: string | null
+          rank?: number
+          role_kind: string
+          role_title: string
+          short_bio: string
+          skills?: string[]
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          display_name?: string
+          guardrails?: string[]
+          historical_era?: string | null
+          id?: string
+          is_chief?: boolean
+          portrait_path?: string | null
+          rank?: number
+          role_kind?: string
+          role_title?: string
+          short_bio?: string
+          skills?: string[]
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       aos_controls: {
         Row: {
@@ -440,6 +548,76 @@ export type Database = {
             columns: ["firm_id"]
             isOneToOne: false
             referencedRelation: "qagac_firms_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hitl_reviews: {
+        Row: {
+          created_at: string
+          decision_id: string | null
+          id: string
+          persona_id: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          review_id: string | null
+          severity: Database["public"]["Enums"]["severity"]
+          status: string
+          summary: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          decision_id?: string | null
+          id?: string
+          persona_id: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          review_id?: string | null
+          severity?: Database["public"]["Enums"]["severity"]
+          status?: string
+          summary: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          decision_id?: string | null
+          id?: string
+          persona_id?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          review_id?: string | null
+          severity?: Database["public"]["Enums"]["severity"]
+          status?: string
+          summary?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hitl_reviews_decision_id_fkey"
+            columns: ["decision_id"]
+            isOneToOne: false
+            referencedRelation: "agent_decisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hitl_reviews_persona_id_fkey"
+            columns: ["persona_id"]
+            isOneToOne: false
+            referencedRelation: "agent_personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hitl_reviews_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
             referencedColumns: ["id"]
           },
         ]
@@ -844,6 +1022,10 @@ export type Database = {
       request_engagement: {
         Args: { _assessor_id: string; _review_id: string }
         Returns: string
+      }
+      resolve_hitl: {
+        Args: { _hitl_id: string; _note: string; _status: string }
+        Returns: undefined
       }
       revoke_role: {
         Args: {
