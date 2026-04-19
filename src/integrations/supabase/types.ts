@@ -541,6 +541,77 @@ export type Database = {
           },
         ]
       }
+      certifications: {
+        Row: {
+          aos_version: string
+          audit_entry_hash: string | null
+          audit_prev_hash: string | null
+          bob_signature: string | null
+          chain_manifest: Json
+          determination: string
+          id: string
+          issued_at: string
+          issued_by: string | null
+          ken_signature: string | null
+          organization: string
+          pdf_path: string | null
+          pdf_sha256: string | null
+          review_id: string
+          scenarios: Database["public"]["Enums"]["scenario_tag"][]
+          scope_statement: string
+          signature_kind: string
+          trigger_kind: string
+        }
+        Insert: {
+          aos_version: string
+          audit_entry_hash?: string | null
+          audit_prev_hash?: string | null
+          bob_signature?: string | null
+          chain_manifest?: Json
+          determination: string
+          id?: string
+          issued_at?: string
+          issued_by?: string | null
+          ken_signature?: string | null
+          organization: string
+          pdf_path?: string | null
+          pdf_sha256?: string | null
+          review_id: string
+          scenarios?: Database["public"]["Enums"]["scenario_tag"][]
+          scope_statement: string
+          signature_kind?: string
+          trigger_kind?: string
+        }
+        Update: {
+          aos_version?: string
+          audit_entry_hash?: string | null
+          audit_prev_hash?: string | null
+          bob_signature?: string | null
+          chain_manifest?: Json
+          determination?: string
+          id?: string
+          issued_at?: string
+          issued_by?: string | null
+          ken_signature?: string | null
+          organization?: string
+          pdf_path?: string | null
+          pdf_sha256?: string | null
+          review_id?: string
+          scenarios?: Database["public"]["Enums"]["scenario_tag"][]
+          scope_statement?: string
+          signature_kind?: string
+          trigger_kind?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certifications_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compensating_controls: {
         Row: {
           aos_control_id: string | null

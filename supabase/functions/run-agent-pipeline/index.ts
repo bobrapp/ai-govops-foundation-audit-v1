@@ -346,7 +346,28 @@ Deno.serve(async (req) => {
       payload: { overall_score: overall, agents_run: agentsRun },
     });
 
-    return new Response(JSON.stringify({ ok: true, overall_score: overall }), {
+    // Auto-issue compliance certification on non-fail verdicts.
+    let certResult: Record<string, unknown> | null = null;
+    try {
+      const { data: confJson } = await admin.rpc("compute_conformance", { _review_id: reviewId });
+      const verdict = (confJson as { verdict?: string } | null)?.verdict ?? "fail";
+      if (verdict !== "fail") {
+        const certResp = await fetch(`${SUPABASE_URL}/functions/v1/issue-certification`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${SERVICE_KEY}`,
+            apikey: SERVICE_KEY,
+          },
+          body: JSON.stringify({ reviewId, trigger: "auto" }),
+        });
+        certResult = await certResp.json().catch(() => null);
+      }
+    } catch (e) {
+      console.error("auto-cert failed (non-fatal)", e instanceof Error ? e.message : e);
+    }
+
+    return new Response(JSON.stringify({ ok: true, overall_score: overall, certification: certResult }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

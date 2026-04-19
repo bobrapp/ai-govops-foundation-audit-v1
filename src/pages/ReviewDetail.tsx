@@ -6,6 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { EngagementPanel } from "@/components/EngagementPanel";
 import { CompensatingControlsPanel } from "@/components/CompensatingControlsPanel";
 import { AttestationPanel } from "@/components/AttestationPanel";
+import { CertificationPanel } from "@/components/CertificationPanel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -143,6 +144,7 @@ const ReviewDetail = () => {
             <TabsTrigger value="engagement">QAGA</TabsTrigger>
             <TabsTrigger value="compensations">Compensations</TabsTrigger>
             <TabsTrigger value="attestation">Attestation</TabsTrigger>
+            <TabsTrigger value="certification">Certification</TabsTrigger>
             <TabsTrigger value="decision">Decision</TabsTrigger>
           </TabsList>
 
@@ -156,6 +158,10 @@ const ReviewDetail = () => {
 
           <TabsContent value="attestation" className="mt-4">
             <AttestationPanel reviewId={id!} />
+          </TabsContent>
+
+          <TabsContent value="certification" className="mt-4">
+            <CertificationPanel reviewId={id!} />
           </TabsContent>
 
           <TabsContent value="findings" className="mt-4 space-y-4">
