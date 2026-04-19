@@ -27,11 +27,15 @@ const Admin = () => {
   const [backfilling, setBackfilling] = useState(false);
 
   const backfillPdfs = async () => {
+    if (!confirm("Regenerate ALL attestation + certification PDFs in the new Aurora design? Existing rows are updated in-place; signatures are recomputed.")) return;
     setBackfilling(true);
-    const { data, error } = await supabase.functions.invoke("backfill-attestation-pdfs", { body: {} });
-    if (error) { toast.error(error.message); setBackfilling(false); return; }
-    if (data?.error) { toast.error(data.error); setBackfilling(false); return; }
-    toast.success(`Generated ${data?.generated ?? 0} signed PDF${data?.generated === 1 ? "" : "s"}`);
+    const [att, cert] = await Promise.all([
+      supabase.functions.invoke("backfill-attestation-pdfs", { body: { force: true } }),
+      supabase.functions.invoke("backfill-certification-pdfs", { body: { force: true } }),
+    ]);
+    if (att.error || att.data?.error) { toast.error(`Attestations: ${att.error?.message ?? att.data?.error}`); setBackfilling(false); return; }
+    if (cert.error || cert.data?.error) { toast.error(`Certifications: ${cert.error?.message ?? cert.data?.error}`); setBackfilling(false); return; }
+    toast.success(`Regenerated ${att.data?.generated ?? 0} attestation + ${cert.data?.generated ?? 0} certification PDFs`);
     setBackfilling(false);
   };
 
