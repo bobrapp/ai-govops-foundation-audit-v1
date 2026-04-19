@@ -1,4 +1,4 @@
-import { FileText, FileQuestion, FileBadge, Presentation, BookOpen, Image as ImageIcon, AlertTriangle, ShieldCheck, type LucideIcon } from "lucide-react";
+import { FileText, FileQuestion, FileBadge, Presentation, BookOpen, Image as ImageIcon, AlertTriangle, ShieldCheck, Wrench, type LucideIcon } from "lucide-react";
 
 export type DocKind = "markdown" | "pdf" | "pptx" | "docx" | "yaml" | "png";
 
@@ -107,6 +107,18 @@ export const DOCS: DocEntry[] = [
     updated: "2026-04-19",
     icon: ShieldCheck,
     route: "/docs/canary",
+  },
+  {
+    id: "operations",
+    title: "Operations Runbook",
+    description:
+      "How to operate the framework: rotate the audit signing key, seed/unseed demo data, verify chains, claim first admin, respond to canary drift, and incident response.",
+    kind: "markdown",
+    badge: "OPS",
+    size: "live",
+    updated: "2026-04-19",
+    icon: Wrench,
+    route: "/docs/operations",
   },
 ];
 

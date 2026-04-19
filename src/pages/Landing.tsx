@@ -1,98 +1,108 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Shield, GitBranch, ScanLine, Scale, FileLock, Brain, Stamp, ArrowRight, Activity, BookOpen } from "lucide-react";
+import {
+  ScanLine,
+  Scale,
+  FileLock,
+  Brain,
+  Stamp,
+  ArrowRight,
+  Activity,
+  BookOpen,
+  Heart,
+} from "lucide-react";
 import { DocsSection } from "@/components/DocsSection";
+import { PublicShell } from "@/components/PublicShell";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { FOUNDATION, PROJECT } from "@/lib/config";
 
 const Landing = () => {
+  usePageMeta({
+    title: "AiGovOps Review Framework — Policy-as-Code, audited & sealed",
+    description:
+      "Run your AI governance policy bundle through agent reviewers, attest with a chartered human, and seal every step in an HMAC-SHA256 audit chain anyone can verify.",
+    canonical: "/",
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      name: PROJECT.name,
+      applicationCategory: "DeveloperApplication",
+      operatingSystem: "Web",
+      url: PROJECT.publishedUrl,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+      publisher: { "@type": "Organization", name: FOUNDATION.name, url: FOUNDATION.url },
+    },
+  });
+
   return (
-    <div className="min-h-screen bg-hero text-foreground relative overflow-hidden">
-      <div className="absolute inset-0 bg-grid opacity-30 pointer-events-none" />
-      <div className="relative">
-        <header className="container max-w-6xl mx-auto flex items-center justify-between py-6">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-md bg-gradient-to-br from-primary to-accent grid place-items-center">
-              <Shield className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <div>
-              <div className="font-semibold tracking-tight">AiGovOps</div>
-              <div className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">Review Framework</div>
-            </div>
-          </div>
+    <PublicShell>
+      <section className="container max-w-6xl mx-auto pt-16 pb-24 text-center">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-card-grad text-xs font-mono text-muted-foreground mb-6">
+          <span className="pulse-dot" /> Agentic review pipeline · signed audit chain
+        </div>
+        <h1 className="text-5xl md:text-6xl font-bold tracking-tight leading-[1.05] max-w-4xl mx-auto">
+          Deploy <span className="text-emerald-grad">Policy-as-Code</span> with an end-to-end agent review.
+        </h1>
+        <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
+          The AiGovOps Review Framework runs your AIGovOps Foundation policy bundle through a crew of
+          specialist agents — lint, risk-score, map to EU AI Act / NIST AI RMF / ISO 42001, and stress-test
+          against your highest-liability scenarios. Every step is HMAC-signed into a tamper-evident audit
+          chain.
+        </p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Link to="/auth">
-            <Button variant="secondary" size="sm">Open console</Button>
+            <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow">
+              Start a review <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
           </Link>
-        </header>
+          <Link to="/docs/prd">
+            <Button size="lg" variant="secondary">
+              <BookOpen className="h-4 w-4 mr-1" /> Read the PRD
+            </Button>
+          </Link>
+          <Link to="/donate">
+            <Button size="lg" variant="outline">
+              <Heart className="h-4 w-4 mr-1" /> Support the Foundation
+            </Button>
+          </Link>
+        </div>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+          <span className="border border-border rounded px-2 py-0.5">Apache-2.0</span>
+          <span className="border border-border rounded px-2 py-0.5">AOS v0.1</span>
+          <span className="border border-border rounded px-2 py-0.5">Audit Chain Verified</span>
+          <span className="border border-border rounded px-2 py-0.5">{FOUNDATION.name}</span>
+        </div>
+      </section>
 
-        <section className="container max-w-6xl mx-auto pt-20 pb-24 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-card-grad text-xs font-mono text-muted-foreground mb-6">
-            <span className="pulse-dot" /> Agentic review pipeline · signed audit chain
-          </div>
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tight leading-[1.05] max-w-4xl mx-auto">
-            Deploy{" "}
-            <span className="text-emerald-grad">Policy-as-Code</span>{" "}
-            with an end-to-end agent review.
-          </h1>
-          <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
-            The AiGovOps Review Framework runs your AIGovOps Foundation policy bundle through a
-            crew of specialist agents — lint, risk-score, map to EU AI Act / NIST AI RMF / ISO 42001,
-            and stress-test against your highest-liability scenarios. Every step is HMAC-signed
-            into a tamper-evident audit chain.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Link to="/auth">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow">
-                Start a review <ArrowRight className="h-4 w-4 ml-1" />
-              </Button>
-            </Link>
-            <Link to="/docs/prd">
-              <Button size="lg" variant="secondary">
-                <BookOpen className="h-4 w-4 mr-1" /> Read the PRD
-              </Button>
-            </Link>
-            <a href="https://www.aigovopsfoundation.org/" target="_blank" rel="noreferrer">
-              <Button size="lg" variant="outline">About AIGovOps Foundation</Button>
-            </a>
-          </div>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-            <span className="border border-border rounded px-2 py-0.5">Apache-2.0</span>
-            <span className="border border-border rounded px-2 py-0.5">AOS v0.1</span>
-            <span className="border border-border rounded px-2 py-0.5">Audit Chain Verified</span>
-            <span className="border border-border rounded px-2 py-0.5">AiGovOps Foundation</span>
-          </div>
-        </section>
+      <DocsSection />
 
-        <DocsSection />
+      <section className="container max-w-6xl mx-auto pb-20">
+        <div className="grid md:grid-cols-3 gap-4">
+          {agentCards.map((c) => (
+            <div key={c.title} className="rounded-xl border border-border bg-card-grad p-5 shadow-elev">
+              <c.icon className="h-5 w-5 text-primary" />
+              <div className="mt-3 font-semibold">{c.title}</div>
+              <div className="text-sm text-muted-foreground mt-1">{c.body}</div>
+            </div>
+          ))}
+        </div>
+      </section>
 
-        <section className="container max-w-6xl mx-auto pb-20">
-          <div className="grid md:grid-cols-3 gap-4">
-            {agentCards.map((c) => (
-              <div key={c.title} className="rounded-xl border border-border bg-card-grad p-5 shadow-elev">
-                <c.icon className="h-5 w-5 text-primary" />
-                <div className="mt-3 font-semibold">{c.title}</div>
-                <div className="text-sm text-muted-foreground mt-1">{c.body}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="container max-w-6xl mx-auto pb-24">
-          <div className="text-xs font-mono uppercase text-muted-foreground tracking-wider mb-3">Hardened against</div>
-          <div className="grid md:grid-cols-4 gap-3">
-            {scenarios.map((s) => (
-              <div key={s.title} className="rounded-lg border border-border bg-card p-4">
-                <div className="font-mono text-[10px] uppercase tracking-wider text-warning">{s.tag}</div>
-                <div className="font-medium mt-1 text-sm">{s.title}</div>
-                <div className="text-xs text-muted-foreground mt-1">{s.body}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground font-mono">
-          AiGovOps Review Framework · for the AIGovOps Foundation policy-as-code service
-        </footer>
-      </div>
-    </div>
+      <section className="container max-w-6xl mx-auto pb-24">
+        <div className="text-xs font-mono uppercase text-muted-foreground tracking-wider mb-3">
+          Hardened against
+        </div>
+        <div className="grid md:grid-cols-4 gap-3">
+          {scenarios.map((s) => (
+            <div key={s.title} className="rounded-lg border border-border bg-card p-4">
+              <div className="font-mono text-[10px] uppercase tracking-wider text-warning">{s.tag}</div>
+              <div className="font-medium mt-1 text-sm">{s.title}</div>
+              <div className="text-xs text-muted-foreground mt-1">{s.body}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </PublicShell>
   );
 };
 

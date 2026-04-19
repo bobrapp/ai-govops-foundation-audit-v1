@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoles } from "@/hooks/useRoles";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, FilePlus2, Shield, LogOut, Activity, UserCog, BookOpen, Crown, Building2 } from "lucide-react";
+import { LayoutDashboard, FilePlus2, Shield, LogOut, Activity, UserCog, BookOpen, Crown, Building2, Heart } from "lucide-react";
 
 export const AppShell = ({ children }: { children: ReactNode }) => {
   const { user, signOut } = useAuth();
@@ -57,12 +57,18 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
             );
           })}
         </nav>
-        <div className="p-3 border-t border-sidebar-border">
+        <div className="p-3 border-t border-sidebar-border space-y-1">
           <div className="text-xs text-muted-foreground truncate font-mono">{user?.email}</div>
+          <Link
+            to="/donate"
+            className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground transition-colors"
+          >
+            <Heart className="h-4 w-4" /> Support the Foundation
+          </Link>
           <Button
             variant="ghost"
             size="sm"
-            className="mt-2 w-full justify-start"
+            className="w-full justify-start"
             onClick={async () => { await signOut(); nav("/"); }}
           >
             <LogOut className="h-4 w-4 mr-2" /> Sign out

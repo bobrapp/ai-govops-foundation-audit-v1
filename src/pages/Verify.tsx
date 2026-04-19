@@ -1,18 +1,27 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Shield, ShieldCheck, ShieldX, Loader2, ExternalLink } from "lucide-react";
+import { ShieldCheck, ShieldX, Loader2, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-const FUNCTION_BASE = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1`;
+import { PublicShell } from "@/components/PublicShell";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { usePageMeta } from "@/hooks/usePageMeta";
+import { EDGE_BASE } from "@/lib/config";
 
 const Verify = () => {
   const { reviewId } = useParams();
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
+  usePageMeta({
+    title: `Verify chain · ${reviewId?.slice(0, 8) ?? ""}`,
+    description: "Public HMAC-SHA256 verification of the audit chain for an AiGovOps review.",
+    canonical: `/verify/${reviewId ?? ""}`,
+  });
+
   useEffect(() => {
     if (!reviewId) return;
-    fetch(`${FUNCTION_BASE}/verify-chain?reviewId=${encodeURIComponent(reviewId)}`, {
+    fetch(`${EDGE_BASE}/verify-chain?reviewId=${encodeURIComponent(reviewId)}`, {
       headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
     })
       .then((r) => r.json())
@@ -21,27 +30,22 @@ const Verify = () => {
   }, [reviewId]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border">
-        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-md bg-gradient-to-br from-primary to-accent grid place-items-center">
-              <Shield className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <div>
-              <div className="font-semibold text-sm tracking-tight">AiGovOps Review Framework</div>
-              <div className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">Public chain verifier</div>
-            </div>
-          </Link>
-          <Link to="/registry" className="text-xs font-mono text-muted-foreground hover:text-foreground">
-            Registry <ExternalLink className="inline h-3 w-3" />
-          </Link>
-        </div>
-      </header>
-
+    <PublicShell
+      eyebrow="Public chain verifier"
+      hero={false}
+      rightSlot={
+        <Link to="/registry">
+          <Button variant="ghost" size="sm">
+            Registry <ExternalLink className="h-3 w-3 ml-1" />
+          </Button>
+        </Link>
+      }
+    >
       <main className="max-w-3xl mx-auto px-6 py-10">
-        <h1 className="text-2xl font-semibold tracking-tight mb-1">Audit Chain Verification</h1>
-        <div className="text-xs font-mono text-muted-foreground mb-6">review: {reviewId}</div>
+        <PageHeader
+          eyebrow={`review: ${reviewId}`}
+          title="Audit Chain Verification"
+        />
 
         {error && (
           <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
@@ -105,7 +109,7 @@ const Verify = () => {
           </>
         )}
       </main>
-    </div>
+    </PublicShell>
   );
 };
 

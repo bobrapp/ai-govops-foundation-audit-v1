@@ -17,18 +17,36 @@ on:
       - "supabase/functions/**"
       - "supabase/migrations/**"
       - "public/specs/**"
-      - "src/pages/AosSpec.tsx"
-      - "src/pages/AuditLog.tsx"
-      - "src/pages/Verify.tsx"
-      - "src/lib/docs-manifest.ts"
+      - "src/**"
       - ".canary-manifest.json"
       - "scripts/verify-canary.mjs"
+      - "scripts/health.mjs"
+      - "package.json"
 
 permissions:
   contents: read
   issues: write
 
 jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - name: Install
+        run: npm ci --no-audit --no-fund
+      - name: Type-check
+        run: npx tsc --noEmit
+      - name: Lint
+        run: npx eslint . --max-warnings=0
+        continue-on-error: true   # surface warnings without blocking until baseline is clean
+      - name: Unit tests
+        run: npx vitest run --reporter=default
+        continue-on-error: true   # tests are sparse today; flip to required once expanded
+
   verify:
     runs-on: ubuntu-latest
     steps:
