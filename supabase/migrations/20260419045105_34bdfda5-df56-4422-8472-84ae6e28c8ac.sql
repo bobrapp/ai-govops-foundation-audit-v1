@@ -1,0 +1,2 @@
+ALTER TABLE public.agent_threads DROP CONSTRAINT IF EXISTS agent_threads_kind_check;
+ALTER TABLE public.agent_threads ADD CONSTRAINT agent_threads_kind_check CHECK (kind = ANY (ARRAY['1on1'::text, 'council'::text, 'intake'::text]));
