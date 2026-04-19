@@ -127,6 +127,58 @@ export type Database = {
           },
         ]
       }
+      agent_messages: {
+        Row: {
+          content: string
+          created_at: string
+          handoff_to: string | null
+          id: string
+          persona_id: string | null
+          role: string
+          thread_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          handoff_to?: string | null
+          id?: string
+          persona_id?: string | null
+          role: string
+          thread_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          handoff_to?: string | null
+          id?: string
+          persona_id?: string | null
+          role?: string
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_messages_handoff_to_fkey"
+            columns: ["handoff_to"]
+            isOneToOne: false
+            referencedRelation: "agent_personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_messages_persona_id_fkey"
+            columns: ["persona_id"]
+            isOneToOne: false
+            referencedRelation: "agent_personas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "agent_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_personas: {
         Row: {
           active: boolean
@@ -177,6 +229,36 @@ export type Database = {
           short_bio?: string
           skills?: string[]
           slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      agent_threads: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          owner_id: string
+          persona_ids: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind?: string
+          owner_id: string
+          persona_ids?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          owner_id?: string
+          persona_ids?: string[]
+          title?: string
           updated_at?: string
         }
         Relationships: []
@@ -763,6 +845,30 @@ export type Database = {
           status?: string
           updated_at?: string
           website?: string | null
+        }
+        Relationships: []
+      }
+      quick_audit_runs: {
+        Row: {
+          created_at: string
+          id: string
+          review_id: string | null
+          scenario: Database["public"]["Enums"]["scenario_tag"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          review_id?: string | null
+          scenario?: Database["public"]["Enums"]["scenario_tag"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          review_id?: string | null
+          scenario?: Database["public"]["Enums"]["scenario_tag"]
+          user_id?: string
         }
         Relationships: []
       }
