@@ -237,6 +237,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          intake_qualified_at: string | null
           kind: string
           owner_id: string
           persona_ids: string[]
@@ -246,6 +247,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          intake_qualified_at?: string | null
           kind?: string
           owner_id: string
           persona_ids?: string[]
@@ -255,6 +257,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          intake_qualified_at?: string | null
           kind?: string
           owner_id?: string
           persona_ids?: string[]
@@ -914,6 +917,7 @@ export type Database = {
           decided_by: string | null
           decision_notes: string | null
           description: string | null
+          from_thread_id: string | null
           id: string
           overall_score: number | null
           scenarios: Database["public"]["Enums"]["scenario_tag"][]
@@ -930,6 +934,7 @@ export type Database = {
           decided_by?: string | null
           decision_notes?: string | null
           description?: string | null
+          from_thread_id?: string | null
           id?: string
           overall_score?: number | null
           scenarios?: Database["public"]["Enums"]["scenario_tag"][]
@@ -946,6 +951,7 @@ export type Database = {
           decided_by?: string | null
           decision_notes?: string | null
           description?: string | null
+          from_thread_id?: string | null
           id?: string
           overall_score?: number | null
           scenarios?: Database["public"]["Enums"]["scenario_tag"][]
@@ -956,7 +962,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "reviews_from_thread_id_fkey"
+            columns: ["from_thread_id"]
+            isOneToOne: false
+            referencedRelation: "agent_threads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       scenario_pack_controls: {
         Row: {
@@ -1100,6 +1114,7 @@ export type Database = {
       }
       claim_first_admin: { Args: never; Returns: boolean }
       compute_conformance: { Args: { _review_id: string }; Returns: Json }
+      count_open_intake_threads: { Args: { _user: string }; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

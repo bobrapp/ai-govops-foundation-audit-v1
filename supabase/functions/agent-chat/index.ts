@@ -1,10 +1,14 @@
 // Agent chat — streams persona-voiced replies via Lovable AI Gateway.
 // Modes:
-//   - 1on1   : single persona answers the user.
-//   - council: Ken "The Chief" routes the next persona, then that persona answers.
+//   - intake  : Ken or Bob runs a structured intake to qualify a Review.
+//               Open to any signed-in user. Caps at 24 turns/thread.
+//   - 1on1    : single persona answers the user. Admin/curator/reviewer only.
+//   - council : Ken "The Chief" routes the next persona, then that persona answers.
+//               Admin/curator/reviewer only.
 //
-// Auth: requires admin OR curator OR reviewer. Owner of the thread only.
 // Persists user message + agent reply (+ optional handoff marker) to agent_messages.
+// On qualification, marks the thread `intake_qualified_at` and returns
+// { qualified: true, scope } so the client can create a draft Review.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -15,6 +19,7 @@ const corsHeaders = {
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MODEL = "google/gemini-2.5-flash";
+const INTAKE_TURN_CAP = 24;
 
 interface Persona {
   id: string;
@@ -50,6 +55,30 @@ Voice rules:
 
 You are part of a council; other members include cryptography (Turing), security (Kerckhoffs), risk (Nightingale), code/SBOM (Lovelace), systems (Hopper), compliance (Pacioli), ethics (Arendt), SRE (Hamilton), and Chief Auditor (Ken Newton).`;
 
+const intakeSystemPrompt = (p: Persona) =>
+  `You are ${p.display_name}, ${p.role_title} of the AIgovops Agent Council, running an INTAKE conversation with a prospective auditee.
+
+Your job in intake is ONLY to qualify what audit they need. You do NOT perform the audit yet. You are warm, brief, and decisive.
+
+Collect, in this order, the minimum needed to draft a Review:
+  1. scenario — one of: enterprise_oss, healthcare_codegen, generative_ip, hr_behavior, general
+  2. organization name
+  3. scope_statement — 1–3 sentences naming the system, environment, and boundary
+  4. evidence_available — short list of artifacts they can share (policy code, SBOM, model card, logs, configs, screenshots, runbooks)
+  5. frameworks_in_scope — any of: EU_AI_Act, NIST_AI_RMF, ISO_42001, HIPAA, SOC2, GDPR, OTHER
+  6. urgency — routine | quarter | urgent
+
+Voice rules:
+- Ask AT MOST 2 questions per turn. Never an interrogation.
+- If the user gives partial info, summarise what you have, ask only what's missing.
+- ${p.is_chief ? "As a Chief, you may also state independence requirements clearly." : ""}
+- Keep replies under 140 words.
+
+When you have ALL six items with reasonable confidence, end your reply with EXACTLY this line on its own (no markdown fences):
+QUALIFIED::{"scenario":"<one>","organization":"<name>","scope_statement":"<text>","evidence_available":["<a>","<b>"],"frameworks_in_scope":["<f>"],"urgency":"<level>"}
+
+Until you emit QUALIFIED, do not pretend the intake is done. If the user goes off-topic, gently steer back.`;
+
 const routerSystemPrompt = (members: Persona[]) =>
   `You are Ken "The Chief" Newton, moderating an AIgovops council session.
 Pick the SINGLE best council member to answer the user's latest message. Choose only from the active council:
@@ -75,6 +104,19 @@ const callGateway = async (
   }
   const data = await resp.json();
   return (data.choices?.[0]?.message?.content ?? "").trim();
+};
+
+// Try to extract a QUALIFIED::{...} marker from a reply.
+const extractQualified = (reply: string): { scope: Record<string, unknown>; cleaned: string } | null => {
+  const m = reply.match(/QUALIFIED::(\{[\s\S]*?\})\s*$/);
+  if (!m) return null;
+  try {
+    const scope = JSON.parse(m[1]);
+    const cleaned = reply.slice(0, m.index).trim();
+    return { scope, cleaned };
+  } catch {
+    return null;
+  }
 };
 
 Deno.serve(async (req) => {
@@ -108,14 +150,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Role gate
+    // Roles
     const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", user.id);
     const roleSet = new Set((roles ?? []).map((r) => r.role));
-    if (!(roleSet.has("admin") || roleSet.has("curator") || roleSet.has("reviewer"))) {
-      return new Response(JSON.stringify({ error: "forbidden: admin, curator, or reviewer only" }), {
-        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const isPrivileged = roleSet.has("admin") || roleSet.has("curator") || roleSet.has("reviewer");
 
     // Thread + ownership
     const { data: thread, error: tErr } = await admin
@@ -131,6 +169,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Mode gating
+    const mode: "intake" | "1on1" | "council" = thread.kind ?? "1on1";
+    if (mode !== "intake" && !isPrivileged) {
+      return new Response(JSON.stringify({ error: "forbidden: 1on1/council require admin, curator, or reviewer" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Personas in this thread
     const personaIds: string[] = thread.persona_ids ?? [];
     if (!personaIds.length) {
@@ -138,6 +184,18 @@ Deno.serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    if (mode === "intake") {
+      // Intake threads must only contain chiefs (Ken/Bob)
+      const { data: pck } = await admin
+        .from("agent_personas").select("is_chief").in("id", personaIds);
+      if (!pck?.length || pck.some((p) => !p.is_chief)) {
+        return new Response(JSON.stringify({ error: "intake threads may only include chief auditors" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const { data: personas } = await admin
       .from("agent_personas")
       .select("id, slug, display_name, role_title, short_bio, skills, guardrails, is_chief")
@@ -151,8 +209,18 @@ Deno.serve(async (req) => {
       .select("role, content, persona_id")
       .eq("thread_id", threadId)
       .order("created_at", { ascending: true })
-      .limit(40);
+      .limit(60);
     const past = (history ?? []) as MessageRow[];
+
+    // Intake turn cap (count user messages already in thread)
+    if (mode === "intake") {
+      const userTurns = past.filter((m) => m.role === "user").length;
+      if (userTurns >= INTAKE_TURN_CAP) {
+        return new Response(JSON.stringify({
+          error: `Intake turn cap reached (${INTAKE_TURN_CAP}). Start a new intake or sign in for full chat.`,
+        }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
 
     // Persist user message
     await admin.from("agent_messages").insert({
@@ -162,8 +230,7 @@ Deno.serve(async (req) => {
     let speakerSlug: string | null = null;
     let handoffReason: string | null = null;
 
-    if (thread.kind === "council" && personaList.length > 1) {
-      // Routing turn — Ken picks next speaker
+    if (mode === "council" && personaList.length > 1) {
       const router = personaList.find((p) => p.is_chief) ?? personaList[0];
       const routerMsgs = [
         { role: "system", content: routerSystemPrompt(personaList) },
@@ -185,7 +252,6 @@ Deno.serve(async (req) => {
       } catch { /* fall through */ }
       if (!speakerSlug) speakerSlug = router.slug;
 
-      // Persist handoff marker
       const speaker = personaList.find((p) => p.slug === speakerSlug)!;
       await admin.from("agent_messages").insert({
         thread_id: threadId,
@@ -194,15 +260,27 @@ Deno.serve(async (req) => {
         handoff_to: speaker.id,
         content: handoffReason ?? `Routing to ${speaker.display_name}.`,
       });
+    } else if (mode === "intake" && personaList.length > 1) {
+      // For intake with both Ken+Bob, alternate: whoever spoke last yields, default Ken first
+      const lastAgent = [...past].reverse().find((m) => m.role === "agent" && m.persona_id);
+      const lastSlug = lastAgent ? personaList.find((p) => p.id === lastAgent.persona_id)?.slug : null;
+      const ken = personaList.find((p) => p.slug === "ken-newton");
+      const bob = personaList.find((p) => p.slug === "bob-smith");
+      speakerSlug = lastSlug === "ken-newton" && bob ? bob.slug
+                   : lastSlug === "bob-smith" && ken ? ken.slug
+                   : (ken?.slug ?? personaList[0].slug);
     } else {
       speakerSlug = personaList[0].slug;
     }
 
     const speaker = personaList.find((p) => p.slug === speakerSlug)!;
 
-    // Build chat for the speaking persona
+    const systemPrompt = mode === "intake"
+      ? intakeSystemPrompt(speaker)
+      : personaSystemPrompt(speaker);
+
     const chatMsgs = [
-      { role: "system", content: personaSystemPrompt(speaker) },
+      { role: "system", content: systemPrompt },
       ...past.map((m) => ({
         role: m.role === "user" ? "user" : "assistant",
         content: m.role === "agent"
@@ -211,20 +289,36 @@ Deno.serve(async (req) => {
       })),
       { role: "user", content: userMessage },
     ];
-    const reply = await callGateway(apiKey, chatMsgs);
+    const rawReply = await callGateway(apiKey, chatMsgs);
+
+    // Detect QUALIFIED marker on intake replies
+    let qualifiedScope: Record<string, unknown> | null = null;
+    let replyToStore = rawReply;
+    if (mode === "intake") {
+      const q = extractQualified(rawReply);
+      if (q) {
+        qualifiedScope = q.scope;
+        replyToStore = q.cleaned ||
+          `I have what we need. Drafting your Review now — you'll be moved to Quick Audit.`;
+      }
+    }
 
     await admin.from("agent_messages").insert({
-      thread_id: threadId, role: "agent", persona_id: speaker.id, content: reply,
+      thread_id: threadId, role: "agent", persona_id: speaker.id, content: replyToStore,
     });
 
-    // Bump thread updated_at
-    await admin.from("agent_threads").update({ updated_at: new Date().toISOString() }).eq("id", threadId);
+    const updatePayload: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (qualifiedScope) updatePayload.intake_qualified_at = new Date().toISOString();
+    await admin.from("agent_threads").update(updatePayload).eq("id", threadId);
 
     return new Response(JSON.stringify({
       ok: true,
+      mode,
       speaker: { id: speaker.id, slug: speaker.slug, display_name: speaker.display_name },
       handoffReason,
-      reply,
+      reply: replyToStore,
+      qualified: !!qualifiedScope,
+      scope: qualifiedScope,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "unknown";

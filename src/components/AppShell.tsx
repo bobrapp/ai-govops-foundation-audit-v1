@@ -21,11 +21,12 @@ export const AppShell = ({ children }: { children: ReactNode }) => {
   );
 
   // Primary nav — daily-driver actions only.
+  // Chat is open to ALL signed-in users (intake mode); curators+ unlock full council.
   const primary = [
     { to: "/quick-audit", label: "Quick Audit", icon: Zap, accent: true },
+    { to: "/agents/chat", label: "Talk to Ken & Bob", icon: MessagesSquare, accent: true },
     { to: "/dashboard", label: "Reviews", icon: LayoutDashboard },
     { to: "/agents", label: "Agent Council", icon: Users },
-    ...(canChat ? [{ to: "/agents/chat", label: "Chat with Agents", icon: MessagesSquare }] : []),
     { to: "/agents/dashboard", label: "Agent Activity", icon: Activity },
     { to: "/demo/enterprise_oss", label: "Watch the Demo", icon: Play },
     { to: "/me/assessor", label: "My QAGA Path", icon: Crown },

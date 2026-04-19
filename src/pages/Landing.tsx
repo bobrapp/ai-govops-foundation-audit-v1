@@ -12,6 +12,7 @@ import {
   Zap,
   Play,
   Crown,
+  Sparkles,
 } from "lucide-react";
 import { DocsSection } from "@/components/DocsSection";
 import { PublicShell } from "@/components/PublicShell";
@@ -50,7 +51,12 @@ const Landing = () => {
           Free quick audit — full attestation by a chartered QAGA assessor.
         </p>
 
-        <div className="mt-10 grid sm:grid-cols-3 gap-4 max-w-3xl mx-auto text-left">
+        <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto text-left">
+          <Link to="/auth?next=/agents/chat" className="group rounded-xl border border-primary/40 bg-primary/10 hover:bg-primary/15 p-5 transition-colors">
+            <Sparkles className="h-5 w-5 text-primary" />
+            <div className="mt-3 font-semibold flex items-center gap-1">Talk to Ken or Bob <ArrowRight className="h-4 w-4 opacity-60 group-hover:translate-x-0.5 transition-transform" /></div>
+            <div className="text-xs text-muted-foreground mt-1">Free intake. A chief auditor qualifies your scope and drafts a Review.</div>
+          </Link>
           <Link to="/auth?next=/quick-audit" className="group rounded-xl border border-primary/30 bg-primary/5 hover:bg-primary/10 p-5 transition-colors">
             <Zap className="h-5 w-5 text-primary" />
             <div className="mt-3 font-semibold flex items-center gap-1">Run a free audit <ArrowRight className="h-4 w-4 opacity-60 group-hover:translate-x-0.5 transition-transform" /></div>

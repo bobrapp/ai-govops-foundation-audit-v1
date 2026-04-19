@@ -4,11 +4,29 @@ import { supabase } from "@/integrations/supabase/client";
 export interface ThreadRow {
   id: string;
   owner_id: string;
-  kind: "1on1" | "council";
+  kind: "1on1" | "council" | "intake";
   title: string;
   persona_ids: string[];
   created_at: string;
   updated_at: string;
+  intake_qualified_at?: string | null;
+}
+
+export interface SendMessageResult {
+  ok: boolean;
+  mode?: "intake" | "1on1" | "council";
+  speaker?: { id: string; slug: string; display_name: string };
+  handoffReason?: string | null;
+  reply?: string;
+  qualified?: boolean;
+  scope?: {
+    scenario?: string;
+    organization?: string;
+    scope_statement?: string;
+    evidence_available?: string[];
+    frameworks_in_scope?: string[];
+    urgency?: string;
+  } | null;
 }
 
 export interface ChatMessageRow {
@@ -56,7 +74,7 @@ export const useCreateThread = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (args: {
-      kind: "1on1" | "council";
+      kind: "1on1" | "council" | "intake";
       personaIds: string[];
       title: string;
     }) => {
@@ -90,7 +108,7 @@ export const useSendMessage = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      return data;
+      return data as SendMessageResult;
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["agent_messages", vars.threadId] });
