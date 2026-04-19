@@ -157,6 +157,14 @@ const QuickAudit = () => {
       const { data: rRow } = await supabase
         .from("reviews").select("overall_score").eq("id", review.id).maybeSingle();
       setOverall(rRow?.overall_score ?? null);
+
+      // 6. Ask Florence Nightingale (via derive_risk_tier RPC) for an evidence-derived tier
+      try {
+        const { data: tier } = await supabase.rpc("derive_risk_tier", { _review_id: review.id });
+        if (tier) setDerivedTier(tier as "medium" | "high" | "critical");
+      } catch {
+        // non-fatal — tier badge just won't render
+      }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Quick audit failed";
       toast.error(msg);
