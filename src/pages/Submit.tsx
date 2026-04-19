@@ -130,7 +130,7 @@ const Submit = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-72">
-              <DropdownMenuLabel>Pre-built policy presets</DropdownMenuLabel>
+              <DropdownMenuLabel>Scenario pack samples</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {PRESETS.map((p) => (
                 <DropdownMenuItem key={p.id} onClick={() => loadPreset(p)} className="flex flex-col items-start gap-0.5 py-2">
@@ -155,7 +155,11 @@ const Submit = () => {
           </div>
 
           <div>
-            <Label className="mb-2 block">Scenarios to stress-test against</Label>
+            <Label className="mb-2 block">Scenario packs to load</Label>
+            <p className="text-xs text-muted-foreground mb-2 -mt-1">
+              Every review runs the same horizontal AOS pipeline. Scenario packs <em>extend</em> coverage
+              with vertical stress tests — they don't fork the standard.
+            </p>
             <div className="grid md:grid-cols-2 gap-2">
               {SCENARIOS.map((s) => (
                 <label key={s.id} className="flex items-start gap-2 rounded-md border border-border bg-card-grad p-3 cursor-pointer hover:border-primary/40">
