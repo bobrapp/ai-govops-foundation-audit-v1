@@ -1,0 +1,21 @@
+name: Security disclosure (DO NOT USE)
+description: Security vulnerabilities must be reported privately
+labels: ["security", "do-not-use-public"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # ⚠️ Stop — do not file a public security issue
+
+        Please report vulnerabilities privately to **security@aigovopsfoundation.org**.
+        See [SECURITY.md](../SECURITY.md) for the full disclosure policy and
+        scope.
+
+        If you opened this template by mistake, close it and email us instead.
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Acknowledgement
+      options:
+        - label: I understand I should email security@aigovopsfoundation.org instead.
+          required: true

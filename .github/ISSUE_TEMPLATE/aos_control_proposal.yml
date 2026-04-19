@@ -1,0 +1,86 @@
+name: AOS Control Proposal (RFC)
+description: Propose an addition, change, or removal to the AiGovOps Operational Standard
+labels: ["aos-rfc", "needs-discussion"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## AOS Change Request
+        Per `GOVERNANCE.md`, AOS changes follow an RFC process:
+        - Minimum **14 days** discussion window
+        - At least **2 maintainer approvals** before merge
+        - Versioned per semver (patch / minor / major)
+  - type: dropdown
+    id: change-type
+    attributes:
+      label: Change type
+      options:
+        - Add new control
+        - Modify existing control
+        - Remove existing control
+        - Add framework mapping
+        - Add new scenario pack
+    validations:
+      required: true
+  - type: input
+    id: control-id
+    attributes:
+      label: Control ID (existing) or proposed ID
+      placeholder: "AOS-L1-19"
+  - type: dropdown
+    id: domain
+    attributes:
+      label: Domain
+      options:
+        - pipeline
+        - evidence
+        - decisioning
+        - safety
+        - data
+        - model
+        - ops
+        - other (specify in justification)
+  - type: textarea
+    id: objective
+    attributes:
+      label: Control objective
+      description: One-sentence statement of what this control requires.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence expected
+    validations:
+      required: true
+  - type: textarea
+    id: framework-refs
+    attributes:
+      label: External framework references
+      description: One per line (e.g. "EU AI Act Art. 14", "NIST AI RMF MEASURE-2.7")
+    validations:
+      required: true
+  - type: textarea
+    id: testing
+    attributes:
+      label: Testing procedure
+      description: How would a QAGA test this in a real assessment?
+    validations:
+      required: true
+  - type: textarea
+    id: justification
+    attributes:
+      label: Justification
+      description: Why is this change needed? Cite regulation, incident, or industry guidance.
+    validations:
+      required: true
+  - type: dropdown
+    id: semver
+    attributes:
+      label: Semver impact
+      options:
+        - Patch (clarification, no conformance change)
+        - Minor (additive)
+        - Major (breaking)
+    validations:
+      required: true

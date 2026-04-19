@@ -1,0 +1,14 @@
+# Default owners for everything in the repo
+*                               @aigovopsfoundation/maintainers
+
+# AOS spec — requires foundation steward review
+/public/specs/                  @aigovopsfoundation/aos-stewards
+
+# Database, RLS, edge functions — requires security review
+/supabase/migrations/           @aigovopsfoundation/security-reviewers
+/supabase/functions/            @aigovopsfoundation/security-reviewers
+
+# Governance & policy docs — requires board review
+/GOVERNANCE.md                  @aigovopsfoundation/board
+/SECURITY.md                    @aigovopsfoundation/security-reviewers
+/CODE_OF_CONDUCT.md             @aigovopsfoundation/board
