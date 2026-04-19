@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -14,12 +14,14 @@ import { Shield, Mail, Sparkles } from "lucide-react";
 const Auth = () => {
   const { signIn, signUp, user } = useAuth();
   const nav = useNavigate();
+  const [params] = useSearchParams();
+  const next = params.get("next") || "/dashboard";
   const [busy, setBusy] = useState(false);
   const [magicBusy, setMagicBusy] = useState(false);
   const [googleBusy, setGoogleBusy] = useState(false);
   const [demoBusy, setDemoBusy] = useState(false);
 
-  useEffect(() => { if (user) nav("/dashboard"); }, [user, nav]);
+  useEffect(() => { if (user) nav(next); }, [user, nav, next]);
 
   const onSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -27,7 +29,7 @@ const Auth = () => {
     setBusy(true);
     const { error } = await signIn(String(fd.get("email")), String(fd.get("password")));
     setBusy(false);
-    if (error) toast.error(error); else { toast.success("welcome back"); nav("/dashboard"); }
+    if (error) toast.error(error); else { toast.success("welcome back"); nav(next); }
   };
 
   const onSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -41,7 +43,7 @@ const Auth = () => {
       String(fd.get("organization")),
     );
     setBusy(false);
-    if (error) toast.error(error); else { toast.success("account created"); nav("/dashboard"); }
+    if (error) toast.error(error); else { toast.success("account created"); nav(next); }
   };
 
   const onMagicLink = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -52,7 +54,7 @@ const Auth = () => {
     setMagicBusy(true);
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+      options: { emailRedirectTo: `${window.location.origin}${next}` },
     });
     setMagicBusy(false);
     if (error) toast.error(error.message);
@@ -70,7 +72,7 @@ const Auth = () => {
       return;
     }
     if (result.redirected) return;
-    nav("/dashboard");
+    nav(next);
   };
 
   const onDemo = async () => {
@@ -79,7 +81,7 @@ const Auth = () => {
     setDemoBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Demo session started — your data is throwaway");
-    nav("/dashboard");
+    nav(next);
   };
 
   return (

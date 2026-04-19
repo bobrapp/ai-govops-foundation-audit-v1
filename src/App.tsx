@@ -32,6 +32,9 @@ const Canary = lazy(() => import("./pages/Canary"));
 const Operations = lazy(() => import("./pages/Operations"));
 const Agents = lazy(() => import("./pages/Agents"));
 const AgentsDashboard = lazy(() => import("./pages/AgentsDashboard"));
+const AgentChat = lazy(() => import("./pages/AgentChat"));
+const QuickAudit = lazy(() => import("./pages/QuickAudit"));
+const Demo = lazy(() => import("./pages/Demo"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -66,7 +69,10 @@ const App = () => (
               <Route path="/docs/canary" element={<Canary />} />
               <Route path="/docs/operations" element={<Operations />} />
               <Route path="/docs/:slug" element={<DocViewer />} />
+              <Route path="/demo" element={<Demo />} />
+              <Route path="/demo/:scenario" element={<Demo />} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/quick-audit" element={<ProtectedRoute><QuickAudit /></ProtectedRoute>} />
               <Route path="/submit" element={<ProtectedRoute><Submit /></ProtectedRoute>} />
               <Route path="/review/:id" element={<ProtectedRoute><ReviewDetail /></ProtectedRoute>} />
               <Route path="/audit" element={<ProtectedRoute><AuditLog /></ProtectedRoute>} />
@@ -76,6 +82,7 @@ const App = () => (
               <Route path="/firms" element={<ProtectedRoute><Firms /></ProtectedRoute>} />
               <Route path="/agents" element={<ProtectedRoute><Agents /></ProtectedRoute>} />
               <Route path="/agents/dashboard" element={<ProtectedRoute><AgentsDashboard /></ProtectedRoute>} />
+              <Route path="/agents/chat" element={<ProtectedRoute><AgentChat /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

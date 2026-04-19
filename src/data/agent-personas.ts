@@ -4,6 +4,7 @@
 // and supplies bundled portrait imports.
 
 import kenNewton from "@/assets/agents/ken-newton.jpg";
+import bobSmith from "@/assets/agents/bob-smith.jpg";
 import turing from "@/assets/agents/turing.jpg";
 import kerckhoffs from "@/assets/agents/kerckhoffs.jpg";
 import nightingale from "@/assets/agents/nightingale.jpg";
@@ -62,6 +63,32 @@ export const PERSONAS: PersonaMeta[] = [
     ],
     portrait: kenNewton,
     rank: 0,
+    is_chief: true,
+  },
+  {
+    slug: "bob-smith",
+    display_name: 'Bob "Fair Witness" Michael Valentine Smith',
+    era: "fictional · 1961",
+    role_title: "Co-Chief Fair Witness Auditor",
+    role_kind: "chief",
+    short_bio:
+      "Modeled on the Fair Witness profession in Heinlein's Stranger in a Strange Land. Bob reports only what he directly observes — never inference, never assumption. He co-signs determinations with Ken and is the tie-breaker on ambiguous evidence.",
+    skills: [
+      "observed_evidence_only",
+      "independent_corroboration",
+      "bias_disclosure",
+      "tie_break_determination",
+      "co_signature",
+    ],
+    guardrails: [
+      "report_only_what_is_observed",
+      "never_infer_from_indirect_evidence",
+      "must_disclose_uncertainty",
+      "no_solo_signature_on_critical",
+      "recuse_when_personally_familiar",
+    ],
+    portrait: bobSmith,
+    rank: 1,
     is_chief: true,
   },
   {

@@ -8,8 +8,10 @@ import {
   Stamp,
   ArrowRight,
   Activity,
-  BookOpen,
   Heart,
+  Zap,
+  Play,
+  Crown,
 } from "lucide-react";
 import { DocsSection } from "@/components/DocsSection";
 import { PublicShell } from "@/components/PublicShell";
@@ -36,36 +38,42 @@ const Landing = () => {
 
   return (
     <PublicShell>
-      <section className="container max-w-6xl mx-auto pt-16 pb-24 text-center">
+      <section className="container max-w-6xl mx-auto pt-16 pb-16 text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-card-grad text-xs font-mono text-muted-foreground mb-6">
-          <span className="pulse-dot" /> Agentic review pipeline · signed audit chain
+          <span className="pulse-dot" /> 10-agent council · signed audit chain
         </div>
         <h1 className="text-5xl md:text-6xl font-bold tracking-tight leading-[1.05] max-w-4xl mx-auto">
-          Deploy <span className="text-emerald-grad">Policy-as-Code</span> with an end-to-end agent review.
+          Audit your AI policy in <span className="text-emerald-grad">90 seconds</span>.
         </h1>
         <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
-          The AiGovOps Review Framework runs your AIGovOps Foundation policy bundle through a crew of
-          specialist agents — lint, risk-score, map to EU AI Act / NIST AI RMF / ISO 42001, and stress-test
-          against your highest-liability scenarios. Every step is HMAC-signed into a tamper-evident audit
-          chain.
+          Paste a policy, watch the council debate it, and get a signed determination.
+          Free quick audit — full attestation by a chartered QAGA assessor.
         </p>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Link to="/auth">
-            <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-glow">
-              Start a review <ArrowRight className="h-4 w-4 ml-1" />
-            </Button>
+
+        <div className="mt-10 grid sm:grid-cols-3 gap-4 max-w-3xl mx-auto text-left">
+          <Link to="/auth?next=/quick-audit" className="group rounded-xl border border-primary/30 bg-primary/5 hover:bg-primary/10 p-5 transition-colors">
+            <Zap className="h-5 w-5 text-primary" />
+            <div className="mt-3 font-semibold flex items-center gap-1">Run a free audit <ArrowRight className="h-4 w-4 opacity-60 group-hover:translate-x-0.5 transition-transform" /></div>
+            <div className="text-xs text-muted-foreground mt-1">Sign in, paste code, get findings in ~20 sec.</div>
           </Link>
-          <Link to="/docs/prd">
-            <Button size="lg" variant="secondary">
-              <BookOpen className="h-4 w-4 mr-1" /> Read the PRD
-            </Button>
+          <Link to="/demo/enterprise_oss" className="group rounded-xl border border-border bg-card-grad hover:border-primary/40 p-5 transition-colors">
+            <Play className="h-5 w-5 text-primary" />
+            <div className="mt-3 font-semibold flex items-center gap-1">Watch the 90-sec demo <ArrowRight className="h-4 w-4 opacity-60 group-hover:translate-x-0.5 transition-transform" /></div>
+            <div className="text-xs text-muted-foreground mt-1">See agents hand off live, no login needed.</div>
           </Link>
-          <Link to="/donate">
-            <Button size="lg" variant="outline">
-              <Heart className="h-4 w-4 mr-1" /> Support the Foundation
-            </Button>
+          <Link to="/registry" className="group rounded-xl border border-warning/30 bg-warning/5 hover:bg-warning/10 p-5 transition-colors">
+            <Crown className="h-5 w-5 text-warning" />
+            <div className="mt-3 font-semibold flex items-center gap-1">Become a QAGA <ArrowRight className="h-4 w-4 opacity-60 group-hover:translate-x-0.5 transition-transform" /></div>
+            <div className="text-xs text-muted-foreground mt-1">Charter a firm or get individually credentialed.</div>
           </Link>
         </div>
+
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+          <Link to="/donate">
+            <Button size="sm" variant="ghost"><Heart className="h-4 w-4 mr-1" /> Support the Foundation</Button>
+          </Link>
+        </div>
+
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
           <span className="border border-border rounded px-2 py-0.5">Apache-2.0</span>
           <span className="border border-border rounded px-2 py-0.5">AOS v0.1</span>
