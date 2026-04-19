@@ -13,6 +13,9 @@ import {
   Play,
   Crown,
   Sparkles,
+  Package,
+  Rss,
+  Terminal,
 } from "lucide-react";
 import { DocsSection } from "@/components/DocsSection";
 import { PublicShell } from "@/components/PublicShell";
